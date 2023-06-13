@@ -39,7 +39,7 @@ switch lower(fdr_method)
 end
 switch lower(ci_method)
     case 'wald'
-        confint = @(x) mean(x,1) + [-1,1]*1.96*std(x,[],1)/sqrt(size(x,1));
+        confint = @(x) mean(x,1) + [-1,1]*norminv(1-alpha/2)*std(x,[],1)/sqrt(size(x,1));
     case 'wilson'
         confint = @(x) wilson(size(x,1),sum(x,1),alpha);
 end
