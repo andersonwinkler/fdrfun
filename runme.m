@@ -1,11 +1,11 @@
 % Simulation parameters
 rng(0);
 numTests   = 1000;
-effectSize = 2;
+effectSize = 3;
 fracPos    = .1;
 fracNeg    = .4;
 q          = 0.05; % test level, E(FDR) to be controlled
-nRlz       = 10000;
+nRlz       = 1000;
 fdr_method = 'bh1995'; % use 'bh1995' or 'bky2006'
 ci_method  = 'Wilson'; % use 'Wald' or 'Wilson'
 alpha      = 0.05; % for the confidence interval
@@ -32,9 +32,9 @@ fdp_fdrs2_neg = zeros(nRlz,1);
 
 % Choose functions for FDR and for the confidence intervals
 switch lower(fdr_method)
-    case 'bh1995'
+    case {'bh1995','bh'}
         fdrfun = @fdr;
-    case 'bky2006'
+    case {'bky2006','bky'}
         fdrfun = @bky7;
 end
 switch lower(ci_method)
@@ -165,16 +165,16 @@ fprintf('\n');
 fprintf('Side of the map: POSITIVE\n');
 fprintf('- E(FDP) canonical FDR:      %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdr_pos),  confint(fdp_fdr_pos));
 fprintf('- E(FDP) two-tailed FDR:     %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdr2_pos), confint(fdp_fdr2_pos));
-fprintf('- E(FDP) combined FDR:       %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdrc),     confint(fdp_fdrc));
-fprintf('- E(FDP) FDR twice:          %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdrc2),    confint(fdp_fdrc2));
+fprintf('- E(FDP) combined FDR:       %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdrc_pos), confint(fdp_fdrc_pos));
+fprintf('- E(FDP) FDR twice:          %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdrc2_pos),confint(fdp_fdrc2_pos));
 fprintf('- E(FDP) split + 1tail FDR:  %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdrs_pos), confint(fdp_fdrs_pos));
 fprintf('- E(FDP) split + 2tail FDR:  %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdrs2_pos),confint(fdp_fdrs2_pos));
 fprintf('\n');
 fprintf('Side of the map: NEGATIVE\n');
 fprintf('- E(FDP) canonical FDR:      %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdr_neg),  confint(fdp_fdr_neg));
 fprintf('- E(FDP) two-tailed FDR:     %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdr2_neg), confint(fdp_fdr2_neg));
-fprintf('- E(FDP) combined FDR:       %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdrc),     confint(fdp_fdrc));
-fprintf('- E(FDP) FDR twice:          %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdrc2),    confint(fdp_fdrc2));
+fprintf('- E(FDP) combined FDR:       %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdrc_neg), confint(fdp_fdrc_neg));
+fprintf('- E(FDP) FDR twice:          %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdrc2_neg),confint(fdp_fdrc2_neg));
 fprintf('- E(FDP) split + 1tail FDR:  %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdrs_neg), confint(fdp_fdrs_neg));
 fprintf('- E(FDP) split + 2tail FDR:  %0.4f (%0.4f-%0.4f)\n',mean(fdp_fdrs2_neg),confint(fdp_fdrs2_neg));
 fprintf('\n');
