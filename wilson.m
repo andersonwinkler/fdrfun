@@ -3,13 +3,12 @@ function LU = wilson(n,X,alpha)
 % trials using the Wilson method.
 %
 % Usage:
-% LU = confint(n,X,alpha,meth)
+% LU = confint(n,X,alpha)
 %
 % - n     : Number of trials.
 % - X     : Number of successful trials.
 % - alpha : Coverage of the confidence interval.
 %           For 95% CI, use alpha = 0.05.
-% - meth  : Method to use. Can be one of:
 % - LU    : Two-element vector with lower and upper CI.
 %
 % The variables n, X and alpha can be either scalars
