@@ -66,7 +66,7 @@ if numel(pval) ~= length(pval)
 end
 
 % Check if pvals are within the interval
-if min(pval) < 0 || max(pval) > 1
+if numel(pval)>0 && (min(pval) < 0 || max(pval) > 1)
     error('Values out of range (0-1).')
 end
 
