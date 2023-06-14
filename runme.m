@@ -1,13 +1,14 @@
 % Simulation parameters
-rng(0);
+rng('shuffle');
 numTests   = 1000;
 effectSize = 3;
-fracPos    = .1;
-fracNeg    = .4;
+fracPos    = 0.1;
+fracNeg    = 0.4;
+rho        = 0.8;  % Compound symmetric correlation among the numTests (rho>=0)
 q          = 0.05; % test level, E(FDR) to be controlled
 nRlz       = 1000;
-fdr_method = 'bh1995'; % use 'bh1995' or 'bky2006'
-ci_method  = 'Wilson'; % use 'Wald' or 'Wilson'
+fdr_method = 'bky2006'; % use 'bh1995' or 'bky2006'
+ci_method  = 'Wald'; % use 'Wald' or 'Wilson'
 alpha      = 0.05; % for the confidence interval
 
 % Vars for later
@@ -61,7 +62,7 @@ end
 for rlz = 1:nRlz
 
     % Create random data, add signal
-    zstats = signal + randn(numTests,1);
+    zstats = signal + sqrt(1-rho)*randn(numTests,1) + sqrt(rho)*randn(1,1);
     idxpos = zstats > 0;
     idxneg = ~idxpos;
 
@@ -150,6 +151,7 @@ fprintf('- Number of tests: %d\n',numTests);
 fprintf('- Effect size (z): %g\n',effectSize);
 fprintf('- Fraction of positive tests: %g\n',fracPos);
 fprintf('- Fraction of negative tests: %g\n',fracNeg);
+fprintf('- Compound symmetric correlation: %g\n',rho);
 fprintf('- FDR method: %s\n',upper(fdr_method));
 fprintf('- Number of realizations: %d\n',nRlz);
 fprintf('- Confidence interval: %g%% / Method: %s\n',100*(1-alpha),ci_method);
