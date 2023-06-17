@@ -73,7 +73,7 @@ histogram(T,100,'Normalization','pdf');xline(t1p);xline(t2p)
 hold on; line(xx,tpdf(xx,df),'color','green','linewidth',2); hold off
 title({sprintf('FDR split pos/neg: Thr P=%f,%f T=%.3f,%.3f',q2p,q1p,t2p,t1p),
        sprintf('%d voxels detected (%d neg, %d pos)',...
-                sum(P(Ineg)<=q2p)+sum(P2(Ipos)<=q1p),sum(P2(Ineg)<=q2p),sum(P2(Ipos<=q1p)))});
+                sum(P2(Ineg)<=q2p)+sum(P2(Ipos)<=q1p),sum(P2(Ineg)<=q2p),sum(P2(Ipos)<=q1p))})
 subplot(2,1,2)
 loglog(Iref(P2(Ipos)),sort(P2(Ipos)),'.-');
 hold on
