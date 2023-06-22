@@ -94,6 +94,7 @@ idxthr = false(size(idx));
 for v = 1:V
     % Line to be used as cutoff
     thrline = idx(v:end)*qval/(V+1-v*(1-qval))/cV;
+
     % P-vals that survive the cutoff
     if any(pval(v:end)<=thrline)
         idxthr(v) = true;
@@ -101,8 +102,10 @@ for v = 1:V
         break
     end
 end
+
 % Find the largest pval, still under the line
 thr = max(pval(idxthr));
+
 % Deal with the case when all the points under the line
 % are equal to zero, and other points are above the line
 if thr == 0

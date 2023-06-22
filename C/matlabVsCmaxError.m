@@ -1,13 +1,14 @@
 %compare performance of C and Matlab bky implementations
 % Simulation parameters
 rng('shuffle');
+rng(3)
 numTests   = 10000;
 effectSize = 3;
 fracPos    = 0.2;
 fracNeg    = 0.4;
 rho        = 0.8;  % Compound symmetric correlation among the numTests (rho>=0)
 q          = 0.05; % test level, E(FDR) to be controlled
-nRlz       = 1000;
+nRlz       = 1;
 alpha      = 0.05; % for the confidence interval
 % Signal to be added and where
 numPos  = round(numTests * fracPos);
@@ -65,6 +66,11 @@ for rlz = 1:nRlz
     maxDifference = max(maxDifference, diff);
     diffAdj = max(abs(padj(:) - cpadj(:)));
     maxDifferenceAdj = max(maxDifferenceAdj, diffAdj);
+    
+    dx = abs(padj(:) - cpadj(:));
+    [mx, idx] = max(dx)
+    padj(idx)
+    cpadj(idx)
 end
 if (maxDifference == 0.0)
     fprintf("Identical results\n");

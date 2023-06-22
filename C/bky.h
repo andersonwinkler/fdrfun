@@ -7,7 +7,13 @@
 
 #include <stdbool.h>
 
-float bky(float *pvals, size_t nvox, double qval);
+#ifdef DT32
+#define flote float
+#else
+#define flote double
+#endif
+
+flote bky(flote *pvals, flote *padj, size_t nvox, double qval);
 
 #ifdef  __cplusplus
 //}
