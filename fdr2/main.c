@@ -142,6 +142,33 @@ double student_t2p( double tt , double dof )
    return pp ;
 }
 
+//https://www.johndcook.com/blog/cpp_phi_inverse/
+double RationalApproximation(double t)
+{
+    // Abramowitz and Stegun formula 26.2.23.
+    // The absolute value of the error should be less than 4.5 e-4.
+    double c[] = {2.515517, 0.802853, 0.010328};
+    double d[] = {1.432788, 0.189269, 0.001308};
+    return t - ((c[2]*t + c[1])*t + c[0]) / 
+               (((d[2]*t + d[1])*t + d[0])*t + 1.0);
+}
+
+double NormalCDFInverse(double p)
+{
+    if (p <= 0.0 || p >= 1.0)
+        return NAN;
+    // See article above for explanation of this section.
+    if (p < 0.5)
+    {
+        // F^-1(p) = - G^-1(p)
+        return -RationalApproximation( sqrt(-2.0*log(p)) );
+    }
+    else
+    {
+        // F^-1(p) = G^-1(1-p)
+        return RationalApproximation( sqrt(-2.0*log(1-p)) );
+    }
+}
 #ifndef MAX
 #define MAX(A,B) ((A) > (B) ? (A) : (B))
 #endif
@@ -165,6 +192,7 @@ void showHelp(int argc, char *argv[]) {
 	printf("  -q  q-value (FDR) threshold (0..1, default: 0.05)\n");
 	printf("  -a  output NIfTI image with FDR-adjusted p-values (default: none)\n");
 	printf("  -v  switch on verbose messages\n");
+	printf("  -t  switch on two-tailed mode\n");
 	printf("  -h  display help\n");
 }
 
@@ -174,7 +202,8 @@ int main(int argc, char *argv[]) {
 	char *pvalFnm = NULL;
 	char *adjFnm = NULL;
 	char *maskFnm = NULL;
-	bool isVerbose = true;
+	bool isVerbose = false;
+	bool isTwoTailed = false;
 	//read arguments
 	int i = 1;
 	char *ptr;
@@ -200,9 +229,10 @@ int main(int argc, char *argv[]) {
 				i++;
 				qval = strtod(argv[i], &ptr);
 			} //help
-			if (argv[i][1] == 'v') {
+			if (argv[i][1] == 'v')
 				isVerbose = true;
-			} //verbose
+			if (argv[i][1] == 't')
+				isTwoTailed = true;
 		} //commands start with '-'
 		i++; //read next parameter
 	} //for each argument
@@ -226,7 +256,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	flt *img = (flt *)nim->data;
-	//first step: convert data to pvalues
+	//report range
 	if ((isVerbose) && (nim->intent_code != NIFTI_INTENT_PVAL)) {
 		flt mn = img[0];
 		flt mx = img[0];
@@ -236,6 +266,18 @@ int main(int argc, char *argv[]) {
 		}
 		printf("Minimum and maximum intensities are: %g and %g\n", mn, mx);
 	}
+	//
+	size_t nvox = nim->nvox;
+	if (isTwoTailed && !(nim->intent_code == NIFTI_INTENT_ZSCORE)) {
+		printf("Two-tailed mode requires t-test or p-value input.");
+		exit(11);
+	}
+	flt* imgz = NULL;
+	if (isTwoTailed && (nim->intent_code == NIFTI_INTENT_ZSCORE)) {
+		imgz = (flt*)malloc(nvox*sizeof(flt));
+		memcpy(imgz, img, nvox * sizeof(flt));
+	} //make a copy of z-score to ppreserve sign
+	//first step: convert data to pvalues
 	if (nim->intent_code == NIFTI_INTENT_PVAL) {
 		//printf("input already p-values!\n");
 	} else if (nim->intent_code == NIFTI_INTENT_LOGPVAL) {
@@ -245,6 +287,9 @@ int main(int argc, char *argv[]) {
 		for (size_t i = 0; i < nim->nvox; i++)
 			img[i] = pow(10.,-fabs(img[i]));
 	} else if (nim->intent_code == NIFTI_INTENT_ZSCORE) {
+		//for alternatives for z-to-p see
+		// https://stackoverflow.com/questions/2328258/cumulative-normal-distribution-function-in-c-c
+		// https://www.johndcook.com/blog/cpp_phi/
 		#ifdef DT32 //issue8
 		flt mn = -5.41;
 		#else
@@ -252,9 +297,17 @@ int main(int argc, char *argv[]) {
 		#endif
 		flt mx = 13.0;
 		size_t nClamp = 0;
-		for (size_t i = 0; i < nim->nvox; i++) {
-			if ((img[i] < mn) || (img[i] >= mx)) nClamp++;
-			img[i] = qg(MAX(img[i], mn));
+		if (isTwoTailed) {
+			for (size_t i = 0; i < nim->nvox; i++) {
+				double z = fabs(img[i]);
+				if (z >= mx) nClamp++;
+				img[i] = 2.0 * qg(z);
+			}
+		}else {
+			for (size_t i = 0; i < nim->nvox; i++) {
+				if ((img[i] < mn) || (img[i] >= mx)) nClamp++;
+				img[i] = qg(MAX(img[i], mn));
+			}
 		}
 		if (nClamp > 0) printf("ztop clamped %zu extreme z-scores\n", nClamp);
 	} else if (nim->intent_code == NIFTI_INTENT_TTEST) {
@@ -266,7 +319,6 @@ int main(int argc, char *argv[]) {
 	} else {
 		printf("Unknown intention (%d): assuming voxels are p-values.\n", nim->intent_code);
 	}
-	size_t nvox = nim->nvox;
 	int* mask = (int*)malloc(nvox*sizeof(int));
 	for (size_t i = 0; i < nvox; i++)
 		mask[i] = -1;
@@ -314,18 +366,62 @@ int main(int argc, char *argv[]) {
 	if (adjFnm != NULL)
 		padj = (double*)malloc(nmaskvox*sizeof(double));
 	double* pvals = (double*)malloc(nmaskvox*sizeof(double));
-	for (size_t i = 0; i < nvox; i++) {
-		if (mask[i] >= 0)
-			pvals[mask[i]] = img[i];
+	double thresh = 0.0;
+	double negthresh = 0.0;
+	if (isTwoTailed) {
+		double* pospadj = NULL;
+		double* negpadj = NULL;
+		if (adjFnm != NULL) {
+			pospadj = (double*)malloc(nmaskvox*sizeof(double));
+			negpadj = (double*)malloc(nmaskvox*sizeof(double));
+		}
+		int npos = 0;
+		for (size_t i = 0; i < nvox; i++) {
+			if ((mask[i] >= 0) && (imgz[i] > 0)) {
+				pvals[npos++] = img[i];
+			}
+		}
+		if (npos > 0)
+			thresh = bky(pvals, pospadj, npos, qval * 0.5);
+		int nneg = 0;
+		for (size_t i = 0; i < nvox; i++) {
+			if ((mask[i] >= 0) && (imgz[i] <= 0)) {
+				pvals[nneg++] = img[i];
+			}
+		}
+		if (nneg > 0)
+			negthresh = bky(pvals, negpadj, nneg, qval * 0.5);
+		if (isVerbose)
+			printf("%d positive and %d negative voxels are in the mask\n", npos, nneg);
+		if (adjFnm != NULL) {
+			npos = 0;
+			nneg = 0;
+			int n = 0;
+			for (size_t i = 0; i < nvox; i++) {
+				if ((mask[i] >= 0) && (imgz[i] > 0)) {
+					padj[n++] = negpadj[npos++];
+				}
+				if ((mask[i] >= 0) && (imgz[i] <= 0)) {
+					padj[n++] = negpadj[nneg++];
+				}
+			}
+		} //combine negative and positive p-values
+		free(pospadj);
+		free(negpadj);
+	} else {
+		for (size_t i = 0; i < nvox; i++) {
+			if (mask[i] >= 0)
+				pvals[mask[i]] = img[i];
+		}
+		thresh = bky(pvals, padj, nmaskvox, qval);
 	}
-	double thresh = bky(pvals, padj, nmaskvox, qval);
+	free(imgz);
 	if (adjFnm != NULL) {
 		for (size_t i = 0; i < nvox; i++) {
 			img[i] = 1.0; //masked regions have a p-value of 1.0
 			if (mask[i] >= 0)
-				img[i] = pvals[mask[i]];
+				img[i] = padj[mask[i]];
 		}
-	
 		if (nifti_set_filenames(nim, adjFnm, 0, 1)) {
 			printf("Unable to create a new file named '%s'\n", adjFnm);
 			return 12;
@@ -345,13 +441,24 @@ int main(int argc, char *argv[]) {
 		nim->cal_max = 0.0;
 		nim->scl_slope = 1.0;
 		nim->scl_inter = 0.0;
+		nim->intent_p1 = thresh;
+		nim->intent_p2 = negthresh;
+		nim->intent_p3 = qval;
 		nifti_save(nim, "");
 	}
 	nifti_image_free(nim);
 	free(padj);
 	free(pvals);
 	free(mask);
-	printf("Probability Threshold of %zu voxels with q-value %g\n", nvox, qval);
-	printf("%.20f\n", thresh);
+	if (isTwoTailed) {
+		printf("Positive\tNegative Z threshold\n");
+		printf("%.8f\t%.8f\n", -NormalCDFInverse(0.5 * thresh), NormalCDFInverse(0.5 * negthresh));
+		printf("Positive\tNegative Probability Threshold of %zu voxels with q-value %g\n", nvox, qval);
+		printf("%.20f\t%.20f\n", thresh, negthresh);
+	
+	} else {
+		printf("Probability Threshold of %zu voxels with q-value %g\n", nvox, qval);
+		printf("%.20f\n", thresh);
+	}
 	return 0;
 }
