@@ -1,0 +1,7 @@
+{
+  "effectSize": 0,
+  "fracPos": 0,
+  "fracNeg": 0,
+  "rho": 0.8,
+  "FDRmethod": "BH1995"
+}

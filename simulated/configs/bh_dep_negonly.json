@@ -1,0 +1,6 @@
+{
+  "fracPos": 0,
+  "fracNeg": 0.25,
+  "rho": 0.8,
+  "FDRmethod": "BH1995"
+}

@@ -1,44 +1,4 @@
 function varargout = bky7(varargin)
-% Computes the FDR-threshold for a vector of p-values
-% using Definition 7 of BKY in full generality.
-%
-% Usage:
-% [pthr,pcor,padj] = bky7(pvals)
-%                    bky7(pval,q)
-%                    bky7(pval,q,cV)
-%
-% Inputs:
-% pvals  = Vector of p-values.
-% q      = Allowed proportion of false positives (q-value).
-%          Default = 0.05.
-% cV     = If set to anything but 1, uses an harmonic sum for c(V).
-%          Default = 1.
-%
-% Outputs:
-% pthr   = FDR threshold.
-% pcor   = FDR corrected p-values.
-% padj   = FDR adjusted p-values.
-%
-% Note that the corrected and adjusted p-values do **not** depend
-% on the supplied q-value, but they do depend on the choice of c(V).
-%
-% References:
-% * Benjamini & Hochberg. Controlling the false discovery
-%   rate: a practical and powerful approach to multiple testing.
-%   J. R. Statist. Soc. B (1995) 57(1):289-300.
-% * Yekutieli & Benjamini. Resampling-based false discovery rate
-%   controlling multiple test procedures for multiple testing
-%   procedures. J. Stat. Plan. Inf. (1999) 82:171-96.
-% * Benjamini, Krieger, and Yekutieli. Adaptive linear step-up
-%   procedures that control the false discovery rate.
-%   Biometrika. (2006) 93(3): 491–507.
-%
-% ________________________________
-% Anderson M. Winkler
-% Research Imaging Center/UTHSCSA
-% Dec/2007 (first version)
-% Dec/2022 (this version)
-% http://brainder.org
 
 % Accept arguments
 switch nargin

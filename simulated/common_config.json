@@ -1,0 +1,9 @@
+{
+  "numTests": 1000,
+  "numRealizations": 1000,
+  "effectSize": 2,
+  "CImethod": "Wald",
+  "q": 0.05,
+  "alpha": 0.05,
+  "seed": "shuffle"
+}
