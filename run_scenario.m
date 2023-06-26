@@ -34,18 +34,21 @@ fdp_fdr       = zeros(numRealizations,1);
 fdp_fdr2      = zeros(numRealizations,1);
 fdp_fdrc      = zeros(numRealizations,1);
 fdp_fdrc2     = zeros(numRealizations,1);
+fdp_fdrc3     = zeros(numRealizations,1);
 fdp_fdrs1     = zeros(numRealizations,1);
 fdp_fdrs2     = zeros(numRealizations,1);
 fdp_fdr_pos   = zeros(numRealizations,1);
 fdp_fdr2_pos  = zeros(numRealizations,1);
 fdp_fdrc_pos  = zeros(numRealizations,1);
 fdp_fdrc2_pos = zeros(numRealizations,1);
+fdp_fdrc3_pos = zeros(numRealizations,1);
 fdp_fdrs1_pos = zeros(numRealizations,1);
 fdp_fdrs2_pos = zeros(numRealizations,1);
 fdp_fdr_neg   = zeros(numRealizations,1);
 fdp_fdr2_neg  = zeros(numRealizations,1);
 fdp_fdrc_neg  = zeros(numRealizations,1);
 fdp_fdrc2_neg = zeros(numRealizations,1);
+fdp_fdrc3_neg = zeros(numRealizations,1);
 fdp_fdrs1_neg = zeros(numRealizations,1);
 fdp_fdrs2_neg = zeros(numRealizations,1);
 
@@ -104,6 +107,13 @@ for rlz = 1:numRealizations
     [~,~,tmp2] = fdrfun(1-pvals);
     fdradjc2 = [tmp1;tmp2];
 
+    % Combined, but do Sidak first:
+    psid1 = 1 - (1 - pvals).^2;
+    psid2 = 1 - (    pvals).^2;
+    [~,~,tmp1] = fdrfun(psid1);
+    [~,~,tmp2] = fdrfun(psid2);
+    fdradjc3 = [tmp1;tmp2];
+
     % Only positive or only negative (suggested by Chris)
     fdradjs1 = zeros(size(pvals));
     [~,~,fdradjs1(idxpos)] = fdrfun(  pvals(idxpos));
@@ -120,6 +130,7 @@ for rlz = 1:numRealizations
     fdp_fdr2  (rlz) = sum((fdradj2  <= q) & ~ (maskPos|maskNeg)) / sum(fdradj2  <= q);
     fdp_fdrc  (rlz) = sum((fdradjc  <= q) & ~ [maskPos;maskNeg]) / sum(fdradjc  <= q);
     fdp_fdrc2 (rlz) = sum((fdradjc2 <= q) & ~ [maskPos;maskNeg]) / sum(fdradjc2 <= q);
+    fdp_fdrc3 (rlz) = sum((fdradjc3 <= q) & ~ [maskPos;maskNeg]) / sum(fdradjc3 <= q);
     fdp_fdrs1 (rlz) = sum((fdradjs1 <= q) & ~ (maskPos|maskNeg)) / sum(fdradjs1 <= q);
     fdp_fdrs2 (rlz) = sum((fdradjs2 <= q) & ~ (maskPos|maskNeg)) / sum(fdradjs2 <= q);
 
@@ -129,6 +140,7 @@ for rlz = 1:numRealizations
     fdp_fdr2_pos  (rlz) = sum((fdradj2  (idxpos) <= q) & ~ maskPos(idxpos)) / sum(fdradj2  (idxpos) <= q);
     fdp_fdrc_pos  (rlz) = sum((fdradjc  (idxpoc) <= q) & ~ maskPos(idxpos)) / sum(fdradjc  (idxpoc) <= q);
     fdp_fdrc2_pos (rlz) = sum((fdradjc2 (idxpoc) <= q) & ~ maskPos(idxpos)) / sum(fdradjc2 (idxpoc) <= q);
+    fdp_fdrc3_pos (rlz) = sum((fdradjc3 (idxpoc) <= q) & ~ maskPos(idxpos)) / sum(fdradjc3 (idxpoc) <= q);
     fdp_fdrs1_pos (rlz) = sum((fdradjs1 (idxpos) <= q) & ~ maskPos(idxpos)) / sum(fdradjs1 (idxpos) <= q);
     fdp_fdrs2_pos (rlz) = sum((fdradjs2 (idxpos) <= q) & ~ maskPos(idxpos)) / sum(fdradjs2 (idxpos) <= q);
 
@@ -138,6 +150,7 @@ for rlz = 1:numRealizations
     fdp_fdr2_neg  (rlz) = sum((fdradj2  (idxneg) <= q) & ~ maskNeg(idxneg)) / sum(fdradj2  (idxneg) <= q);
     fdp_fdrc_neg  (rlz) = sum((fdradjc  (idxnec) <= q) & ~ maskNeg(idxneg)) / sum(fdradjc  (idxnec) <= q);
     fdp_fdrc2_neg (rlz) = sum((fdradjc2 (idxnec) <= q) & ~ maskNeg(idxneg)) / sum(fdradjc2 (idxnec) <= q);
+    fdp_fdrc3_neg (rlz) = sum((fdradjc3 (idxnec) <= q) & ~ maskNeg(idxneg)) / sum(fdradjc3 (idxnec) <= q);
     fdp_fdrs1_neg (rlz) = sum((fdradjs1 (idxneg) <= q) & ~ maskNeg(idxneg)) / sum(fdradjs1 (idxneg) <= q);
     fdp_fdrs2_neg (rlz) = sum((fdradjs2 (idxneg) <= q) & ~ maskNeg(idxneg)) / sum(fdradjs2 (idxneg) <= q);
 end
@@ -148,18 +161,21 @@ fdp_fdr       (isnan(fdp_fdr  )) = 0;
 fdp_fdr2      (isnan(fdp_fdr2 )) = 0;
 fdp_fdrc      (isnan(fdp_fdrc )) = 0;
 fdp_fdrc2     (isnan(fdp_fdrc2)) = 0;
+fdp_fdrc3     (isnan(fdp_fdrc3)) = 0;
 fdp_fdrs1     (isnan(fdp_fdrs1)) = 0;
 fdp_fdrs2     (isnan(fdp_fdrs2)) = 0;
 fdp_fdr_pos   (isnan(fdp_fdr_pos  )) = 0;
 fdp_fdr2_pos  (isnan(fdp_fdr2_pos )) = 0;
 fdp_fdrc_pos  (isnan(fdp_fdrc_pos )) = 0;
 fdp_fdrc2_pos (isnan(fdp_fdrc2_pos)) = 0;
+fdp_fdrc3_pos (isnan(fdp_fdrc3_pos)) = 0;
 fdp_fdrs1_pos (isnan(fdp_fdrs1_pos)) = 0;
 fdp_fdrs2_pos (isnan(fdp_fdrs2_pos)) = 0;
 fdp_fdr_neg   (isnan(fdp_fdr_neg  )) = 0;
 fdp_fdr2_neg  (isnan(fdp_fdr2_neg )) = 0;
 fdp_fdrc_neg  (isnan(fdp_fdrc_neg )) = 0;
 fdp_fdrc2_neg (isnan(fdp_fdrc2_neg)) = 0;
+fdp_fdrc3_neg (isnan(fdp_fdrc3_neg)) = 0;
 fdp_fdrs1_neg (isnan(fdp_fdrs1_neg)) = 0;
 fdp_fdrs2_neg (isnan(fdp_fdrs2_neg)) = 0;
 
@@ -168,18 +184,21 @@ J.BothSides.canonical  = [mean(fdp_fdr),       confint(fdp_fdr)];
 J.BothSides.twotailed  = [mean(fdp_fdr2),      confint(fdp_fdr2)];
 J.BothSides.combined   = [mean(fdp_fdrc),      confint(fdp_fdrc)];
 J.BothSides.twice      = [mean(fdp_fdrc2),     confint(fdp_fdrc2)];
+J.BothSides.sidaktwice = [mean(fdp_fdrc3),     confint(fdp_fdrc3)];
 J.BothSides.split1tail = [mean(fdp_fdrs1),     confint(fdp_fdrs1)];
 J.BothSides.split2tail = [mean(fdp_fdrs2),     confint(fdp_fdrs2)];
 J.PosSide.canonical    = [mean(fdp_fdr_pos),   confint(fdp_fdr_pos)];
 J.PosSide.twotailed    = [mean(fdp_fdr2_pos),  confint(fdp_fdr2_pos)];
 J.PosSide.combined     = [mean(fdp_fdrc_pos),  confint(fdp_fdrc_pos)];
 J.PosSide.twice        = [mean(fdp_fdrc2_pos), confint(fdp_fdrc2_pos)];
+J.PosSide.sidaktwice   = [mean(fdp_fdrc3_pos), confint(fdp_fdrc3_pos)];
 J.PosSide.split1tail   = [mean(fdp_fdrs1_pos), confint(fdp_fdrs1_pos)];
 J.PosSide.split2tail   = [mean(fdp_fdrs2_pos), confint(fdp_fdrs2_pos)];
 J.NegSide.canonical    = [mean(fdp_fdr_neg),   confint(fdp_fdr_neg)];
 J.NegSide.twotailed    = [mean(fdp_fdr2_neg),  confint(fdp_fdr2_neg)];
 J.NegSide.combined     = [mean(fdp_fdrc_neg),  confint(fdp_fdrc_neg)];
 J.NegSide.twice        = [mean(fdp_fdrc2_neg), confint(fdp_fdrc2_neg)];
+J.NegSide.sidaktwice   = [mean(fdp_fdrc3_neg), confint(fdp_fdrc3_neg)];
 J.NegSide.split1tail   = [mean(fdp_fdrs1_neg), confint(fdp_fdrs1_neg)];
 J.NegSide.split2tail   = [mean(fdp_fdrs2_neg), confint(fdp_fdrs2_neg)];
 

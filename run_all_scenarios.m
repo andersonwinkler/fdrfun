@@ -4,14 +4,14 @@
 % List of configuration files defining the scenarios
 Jfiles = dir(fullfile(repodir,'simulated','configs','*.json'));
 
-% % Run each of these scenarios
-% for j = 1:numel(Jfiles)
-%     fprintf('Running scenario %d/%d\n',j,numel(Jfiles));
-%     run_scenario(...
-%         fullfile(repodir,'simulated','configs',Jfiles(j).name),...
-%         fullfile(repodir,'simulated','common_config.json'),...
-%         fullfile(repodir,'simulated','results',Jfiles(j).name));
-% end
+% Run each of these scenarios
+for j = 1:numel(Jfiles)
+    fprintf('Running scenario %d/%d\n',j,numel(Jfiles));
+    run_scenario(...
+        fullfile(repodir,'simulated','configs',Jfiles(j).name),...
+        fullfile(repodir,'simulated','common_config.json'),...
+        fullfile(repodir,'simulated','results',Jfiles(j).name));
+end
 
 % Generate a table with the results, save it
 T = table();
