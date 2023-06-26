@@ -1,11 +1,11 @@
 % Demo with NARPS data
 % Obtain with these commands in the shell
 %  wget https://zenodo.org/record/3528329/files/narps_origdata_1.0.tgz 
-%  tar xzvf narps_origdata_1.0.tgz ./orig/4735_50GV/orig/4735_50GV/hypo1_unthresh.nii.gz
-%  mv ./orig/4735_50GV/orig/4735_50GV/hypo1_unthresh.nii.gz narps-4735_50GV-hypo1_unthresh.nii.gz
+%  tar xzvf narps_origdata_1.0.tgz orig/4965_9U7M/hypo1_unthresh.nii.gz
+%  mv orig/4965_9U7M/hypo1_unthresh.nii.gz narps-4965_9U7M-hypo1_unthresh.nii.gz
 
 
-T=spm_read_vols(spm_vol('narps-4735_50GV-hypo1_unthresh.nii.gz'));
+T=spm_read_vols(spm_vol('narps-4965_9U7M-hypo1_unthresh.nii.gz'));
 T=T(T~=0);
 df=107;
 alph=0.05;
