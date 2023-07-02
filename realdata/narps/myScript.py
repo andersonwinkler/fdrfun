@@ -1,8 +1,7 @@
 import gl
 gl.resetdefaults()
 gl.bmpzoom(2)
-pth = "/usr/local/fsl/data/standard/"
-gl.loadimage(pth+'MNI152_T1_2mm_brain.nii.gz')
+gl.loadimage('MNI152_T1_2mm_brain.nii.gz')
 #open overlay: show positive regions
 gl.overlayload('narps-4965_9U7M-hypo1_unthresh.nii.gz')
 gl.minmax(1, 2, 7)
