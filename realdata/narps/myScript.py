@@ -1,14 +1,14 @@
 import gl
 gl.resetdefaults()
 gl.bmpzoom(2)
-gl.loadimage('MNI152_T1_2mm_brain.nii.gz')
+gl.loadimage('MNI152_T1_2mm_brain.nii')
 #open overlay: show positive regions
-gl.overlayload('narps-4965_9U7M-hypo1_unthresh.nii.gz')
+gl.overlayload('narps-4965_9U7M-hypo1_unthresh.nii')
 gl.minmax(1, 2, 7)
 gl.opacity(1,70)
 gl.colorname (1,"6warm")
 #open overlay: show negative regions
-gl.overlayload('narps-4965_9U7M-hypo1_unthresh.nii.gz')
+gl.overlayload('narps-4965_9U7M-hypo1_unthresh.nii')
 gl.minmax(2, -2, -7)
 gl.opacity(1,70)
 gl.colorname (2,"5winter")
