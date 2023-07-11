@@ -1,6 +1,6 @@
 {
-  "pposthr": 1.3010299956639813,
-  "pnegthr": "does not apply",
-  "zposthr": 1.6448536269514729,
-  "znegthr": "does not apply"
+  "pposthr": 1.6020599913279623,
+  "pnegthr": 1.6020599913279623,
+  "zposthr": 1.9823833701756974,
+  "znegthr": 1.9823833701756974
 }
