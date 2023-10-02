@@ -1,5 +1,8 @@
 function run_scenario(commonfile,scenariofile,outputfile)
 
+% Keep track of time
+st = tic;
+
 % Read general configuration (common to all scenarios)
 J = readjson(commonfile);
 
@@ -88,8 +91,9 @@ for rlz = 1:numRealizations
     idxneg = ~idxpos;
 
     % The usual pvalues, one-tailed
-    pvals = normcdf(zstats,'upper');
-    [~,~,fdradj] = fdrfun(pvals);
+    pvals0 = normcdf(zstats,'upper');
+    pvals1 = normcdf(zstats); % This to avoid computing 1-p later and thus retain precision
+    [~,~,fdradj] = fdrfun(pvals0);
 
     % Two-tailed p-values (this is equivalent to what PALM does with -twotail)
     pvals2 = 2*normcdf(abs(zstats),'upper');
@@ -97,31 +101,31 @@ for rlz = 1:numRealizations
 
     % Combined pos and neg, with duplicate number of tests (this is what PALM
     % does for -corrcon with -fdr, i.e., the cfdrp files)
-    pvalsc = [pvals;1-pvals];
+    pvalsc = [pvals0;pvals1];
     [~,~,fdradjc] = fdrfun(pvalsc);
 
-    % Combined two separate runs of FDR, once all tests, once on all tests negatated
+    % Combined two separate runs of FDR, once all tests, once on all tests negated
     % What Tom had incorrectly had inferred was Chris' suggestion (PALM
     % also outputs this even if -corrcon is used, i.e., the fdrp files)
-    [~,~,tmp1] = fdrfun(  pvals);
-    [~,~,tmp2] = fdrfun(1-pvals);
+    [~,~,tmp1] = fdrfun(pvals0);
+    [~,~,tmp2] = fdrfun(pvals1);
     fdradjc2 = [tmp1;tmp2];
 
     % Combined, but do Sidak first:
-    psid1 = 1 - (1 - pvals).^2;
-    psid2 = 1 - (    pvals).^2;
+    psid1 = 1 - (pvals1).^2;
+    psid2 = 1 - (pvals0).^2;
     [~,~,tmp1] = fdrfun(psid1);
     [~,~,tmp2] = fdrfun(psid2);
     fdradjc3 = [tmp1;tmp2];
 
     % Only positive or only negative (suggested by Chris)
-    fdradjs1 = zeros(size(pvals));
-    [~,~,fdradjs1(idxpos)] = fdrfun(  pvals(idxpos));
-    [~,~,fdradjs1(idxneg)] = fdrfun(1-pvals(idxneg));
+    fdradjs1 = zeros(size(pvals0));
+    [~,~,fdradjs1(idxpos)] = fdrfun(pvals0(idxpos));
+    [~,~,fdradjs1(idxneg)] = fdrfun(pvals1(idxneg));
 
     % Only positive or only negative (this is Tom's suggestion, but was already
     % in Anderson's code as if it had been suggested by Chris)
-    fdradjs2 = zeros(size(pvals));
+    fdradjs2 = zeros(size(pvals0));
     [~,~,fdradjs2(idxpos)] = fdrfun(pvals2(idxpos));
     [~,~,fdradjs2(idxneg)] = fdrfun(pvals2(idxneg));
 
@@ -134,7 +138,7 @@ for rlz = 1:numRealizations
     fdp_fdrs1 (rlz) = sum((fdradjs1 <= q) & ~ (maskPos|maskNeg)) / sum(fdradjs1 <= q);
     fdp_fdrs2 (rlz) = sum((fdradjs2 <= q) & ~ (maskPos|maskNeg)) / sum(fdradjs2 <= q);
 
-    % Empirical FDRs (positive side of the map, i.e., user interested in positive results only)
+    % Empirical FDRs (positive side of the map, i.e., user interested in positive results only, i.e., results that match the direction of the contrast)
     idxpoc = [idxpos;false(size(idxpos))];
     fdp_fdr_pos   (rlz) = sum((fdradj   (idxpos) <= q) & ~ maskPos(idxpos)) / sum(fdradj   (idxpos) <= q);
     fdp_fdr2_pos  (rlz) = sum((fdradj2  (idxpos) <= q) & ~ maskPos(idxpos)) / sum(fdradj2  (idxpos) <= q);
@@ -144,7 +148,7 @@ for rlz = 1:numRealizations
     fdp_fdrs1_pos (rlz) = sum((fdradjs1 (idxpos) <= q) & ~ maskPos(idxpos)) / sum(fdradjs1 (idxpos) <= q);
     fdp_fdrs2_pos (rlz) = sum((fdradjs2 (idxpos) <= q) & ~ maskPos(idxpos)) / sum(fdradjs2 (idxpos) <= q);
 
-    % Empirical FDRs (negative side of the map, i.e., user interested in negative results only)
+    % Empirical FDRs (negative side of the map, i.e., user interested in negative results only, i.e., results opposite to the direction of the contrast)
     idxnec = [false(size(idxneg));idxneg];
     fdp_fdr_neg   (rlz) = sum((fdradj   (idxneg) <= q) & ~ maskNeg(idxneg)) / sum(fdradj   (idxneg) <= q);
     fdp_fdr2_neg  (rlz) = sum((fdradj2  (idxneg) <= q) & ~ maskNeg(idxneg)) / sum(fdradj2  (idxneg) <= q);
@@ -201,6 +205,7 @@ J.NegSide.twice        = [mean(fdp_fdrc2_neg), confint(fdp_fdrc2_neg)];
 J.NegSide.sidaktwice   = [mean(fdp_fdrc3_neg), confint(fdp_fdrc3_neg)];
 J.NegSide.split1tail   = [mean(fdp_fdrs1_neg), confint(fdp_fdrs1_neg)];
 J.NegSide.split2tail   = [mean(fdp_fdrs2_neg), confint(fdp_fdrs2_neg)];
+J.elapsed              = toc(st);
 
 % Write results
 writejson(J,outputfile)
