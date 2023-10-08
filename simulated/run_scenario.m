@@ -104,14 +104,14 @@ for rlz = 1:numRealizations
     pvalsc = [pvals0;pvals1];
     [~,~,fdradjc] = fdrfun(pvalsc);
 
-    % Combined two separate runs of FDR, once all tests, once on all tests negated
+    % Two separate runs of FDR, once all tests, once on all tests negated
     % What Tom had incorrectly had inferred was Chris' suggestion (PALM
     % also outputs this even if -corrcon is used, i.e., the fdrp files)
     [~,~,tmp1] = fdrfun(pvals0);
     [~,~,tmp2] = fdrfun(pvals1);
     fdradjc2 = [tmp1;tmp2];
 
-    % Combined, but do Sidak first:
+    % As above, but do Sidak first:
     psid1 = 1 - (pvals1).^2;
     psid2 = 1 - (pvals0).^2;
     [~,~,tmp1] = fdrfun(psid1);
