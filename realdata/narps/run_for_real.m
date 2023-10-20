@@ -28,17 +28,17 @@ idxneg = ~idxpos;
 df           = 107;
 pvals0       = tcdf(tstats,df,'upper');
 T.data(mask) = -log10(pvals0);
-T.filename   = 'narps-4965_9U7M-hypo1_pvals_mappos.nii';
+T.filename   = 'narps-4965_9U7M-hypo1_unc_pvals_mappos.nii';
 palm_miscwrite(T);
 pvals1       = tcdf(tstats,df); % 1-p, to avoid losing precision
 T.data(mask) = -log10(pvals1);
-T.filename   = 'narps-4965_9U7M-hypo1_pvals_mapneg.nii';
+T.filename   = 'narps-4965_9U7M-hypo1_unc_pvals_mapneg.nii';
 palm_miscwrite(T);
 J.pposthr    = -log10(alpha/2);
 J.pnegthr    = -log10(alpha/2);
 J.zposthr    = -tinv (alpha/2,df);
 J.znegthr    = -tinv (alpha/2,df);
-writejson(J,'narps-4965_9U7M-hypo1_pvals.json');
+writejson(J,'narps-4965_9U7M-hypo1_unc_pvals.json');
 
 % CANONICAL
 [thrcan0,~,adjcan0] = fdrfun(pvals0);
