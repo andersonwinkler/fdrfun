@@ -2,7 +2,7 @@
   "numTests": 2000,
   "numRealizations": 2000,
   "effectSize": 3,
-  "CImethod": "Wilson",
+  "CImethod": "Wald",
   "q": 0.05,
   "alpha": 0.05,
   "seed": "shuffle"
