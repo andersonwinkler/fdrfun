@@ -1,6 +1,6 @@
 {
-  "numTests": 2000,
-  "numRealizations": 2000,
+  "numTests": 20,
+  "numRealizations": 100000,
   "effectSize": 3,
   "CImethod": "Wald",
   "q": 0.05,

@@ -1,7 +1,7 @@
 {
-  "scenario": 4,
+  "scenario": 9,
   "fracPos": 0.25,
   "fracNeg": 0.25,
-  "rho_sign": 0,
+  "rho_sign": -1,
   "FDRmethod": "BH1995"
 }

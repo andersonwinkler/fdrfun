@@ -1,13 +1,13 @@
 % Simulation parameters
 rng('shuffle');
-numTests   = 1000;
+numTests   = 20;
 effectSize = 3;
 fracPos    = 0.5;
 fracNeg    = 0;
-rho        = 0;  % Compound symmetric correlation among the numTests (rho>=0)
+rho_sign   = 0; % Dependency among tests (+1 for positive, -1 for negative, 0 for independent)
 q          = 0.05; % test level, E(FDR) to be controlled
-nRlz       = 1000;
-fdr_method = 'bky2006'; % use 'bh1995' or 'bky2006'
+nRlz       = 100000;
+fdr_method = 'bh1995'; % use 'bh1995' or 'bky2006'
 ci_method  = 'Wald'; % use 'Wald' or 'Wilson'
 alpha      = 0.05; % for the confidence interval
 
@@ -58,11 +58,16 @@ if numNeg >= 1
     signal(end-numNeg:end) = -effectSize;
 end
 
+% Compound symmetric correlation among the numTests
+rho = rho_sign/numTests;
+C   = ones(numTests)*rho + diag(ones(numTests,1)*(1-rho));
+R   = chol(C);
+
 % For each realization
 for rlz = 1:nRlz
 
     % Create random data, add signal
-    zstats = signal + sqrt(1-rho)*randn(numTests,1) + sqrt(rho)*randn(1,1);
+    zstats = signal + R'*randn(numTests,1);
     idxpos = zstats > 0;
     idxneg = ~idxpos;
 

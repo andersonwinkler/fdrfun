@@ -25,7 +25,7 @@ numTests        = J.numTests; % number of "voxels"
 effectSize      = J.effectSize; % z-stat that determines the synthetic effect size
 fracPos         = J.fracPos; % fraction of tests with true positive effect
 fracNeg         = J.fracNeg; % fraction of tests with true negative effect
-rho             = J.rho;  % compound symmetric correlation among the numTests (rho>=0)
+rho_sign        = J.rho_sign;  % compound symmetric correlation among the numTests (rho>=0)
 q               = J.q; % test level, E(FDR) to be controlled
 numRealizations = J.numRealizations; % number of times we repeat the simulation
 FDRmethod       = J.FDRmethod; % use 'bh1995' or 'bky2006'
@@ -73,11 +73,16 @@ if numNeg >= 1
     signal(end-numNeg:end) = -effectSize;
 end
 
+% Compound symmetric correlation among the numTests
+rho = rho_sign/numTests;
+C   = ones(numTests)*rho + diag(ones(numTests,1)*(1-rho));
+R   = chol(C);
+
 % For each realization
 for rlz = 1:numRealizations
 
     % Create random data, add signal
-    zstats = signal + sqrt(1-rho)*randn(numTests,1) + sqrt(rho)*randn(1,1);
+    zstats = signal + R'*randn(numTests,1);
     idxpos = zstats > 0;
     idxneg = ~idxpos;
 
