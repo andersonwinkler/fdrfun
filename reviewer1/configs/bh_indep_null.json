@@ -1,0 +1,8 @@
+{
+  "scenario": 1,
+  "effectSize": 0,
+  "fracPos": 0,
+  "fracNeg": 0,
+  "rho_sign": 0,
+  "FDRmethod": "BH1995"
+}
