@@ -131,6 +131,7 @@ if nargout == 2 || nargout == 3
         % For every p-value, this is the minimum q that will eventually
         % satisfy Definition #7 of Benjamini, Krieger and Yekutieli (2006).
         pcor(v) = min(pval(v:end).*(V+1-v).*cV./(idx(v:end)-v*pval(v:end)));
+        %pcor(v) = min(pval(v:end).*(V+1-v).*cV./(v-v*pval(v:end)));
         if pcor(v) >= 1
             pcor(v:end) = 1;
             break

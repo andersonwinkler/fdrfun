@@ -1,13 +1,13 @@
 % Simulation parameters
 rng('shuffle');
-numTests   = 20;
+numTests   = 2000;
 effectSize = 3;
-fracPos    = 0.5;
-fracNeg    = 0;
+fracPos    = 0.25;
+fracNeg    = 0.25;
 rho_sign   = 0; % Dependency among tests (+1 for positive, -1 for negative, 0 for independent)
 q          = 0.05; % test level, E(FDR) to be controlled
-nRlz       = 100000;
-fdr_method = 'bh1995'; % use 'bh1995' or 'bky2006'
+nRlz       = 1000;
+fdr_method = 'bky2006'; % use 'bh1995' or 'bky2006'
 ci_method  = 'Wald'; % use 'Wald' or 'Wilson'
 alpha      = 0.05; % for the confidence interval
 
