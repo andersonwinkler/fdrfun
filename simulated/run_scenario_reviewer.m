@@ -37,14 +37,20 @@ fdp_can     = zeros(numRealizations,1);
 fdp_com     = zeros(numRealizations,1);
 fdp_two     = zeros(numRealizations,1);
 fdp_spl     = zeros(numRealizations,1);
+fdp_re1     = zeros(numRealizations,1);
+fdp_re2     = zeros(numRealizations,1);
 fdp_can_pos = zeros(numRealizations,1);
 fdp_com_pos = zeros(numRealizations,1);
 fdp_two_pos = zeros(numRealizations,1);
 fdp_spl_pos = zeros(numRealizations,1);
+fdp_re1_pos = zeros(numRealizations,1);
+fdp_re2_pos = zeros(numRealizations,1);
 fdp_can_neg = zeros(numRealizations,1);
 fdp_com_neg = zeros(numRealizations,1);
 fdp_two_neg = zeros(numRealizations,1);
 fdp_spl_neg = zeros(numRealizations,1);
+fdp_re1_neg = zeros(numRealizations,1);
+fdp_re2_neg = zeros(numRealizations,1);
 
 % Choose functions for FDR and for the confidence intervals
 switch lower(FDRmethod)
@@ -110,10 +116,10 @@ for rlz = 1:numRealizations
     [~,~,adjspl(idxneg)] = fdrfun(pvals2(idxneg));
 
     % REVIEWER 1 - METHOD 1
-    adjre1 = 1-(1-adjspl).^numTests;
+    adjre1 = 1-(1-adjspl).^2;
 
     % REVIEWER 1 - METHOD 2
-    adjre2 = 1-(1-adjcan).^numTests;
+    adjre2 = 1-(1-adjcan).^2;
 
     % Empirical FDRs (global, i.e., the user looks into both sides of the map)
     fdp_can(rlz) = sum((adjcan <= q) & ~ [maskPos;maskNeg]) / sum(adjcan <= q);
