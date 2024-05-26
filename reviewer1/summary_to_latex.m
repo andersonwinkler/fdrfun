@@ -4,24 +4,26 @@
 T = readtable(fullfile(repodir,'summary_results.csv'));
 T = sortrows(T,{'FDRmethod','scenario'},{'ascend','ascend'});
 
-% Select columns of interest, convert to percentages
-Tx = T(:,14:end-1);
+% Select columns of interest, drop negative dep scenarios, convert to percentages
+nidx = T.scenario <= 10;
+Tx = T(nidx,14:end-1);
 Tx = table2array(Tx)*100;
 
 % Column headers
 Th = T.Properties.VariableNames;
 Th = Th(14:end-1);
-hidx = contains(Th,'_reviewer');
+hidx = contains(Th,'_question') | contains(Th,'_old');
+Th = Th(:,hidx);
 
 % Rearrange the table
 Tx = Tx(:,hidx);
 Ty = [];
-Ty( 1:10, 1:6 ) = Tx( 1:10, 1:6);
-Ty( 1:10, 7:12) = Tx(11:20, 1:6);
-Ty(11:20, 1:6 ) = Tx( 1:10, 7:12);
-Ty(11:20, 7:12) = Tx(11:20, 7:12);
-Ty(21:30, 1:6 ) = Tx( 1:10,13:18);
-Ty(21:30, 7:12) = Tx(11:20,13:18);
+Ty( 1:10, 1:9 ) = Tx( 1:10, 1:9);
+Ty( 1:10,10:18) = Tx(11:20, 1:9);
+Ty(11:20, 1:9 ) = Tx( 1:10,10:18);
+Ty(11:20,10:18) = Tx(11:20,10:18);
+Ty(21:30, 1:9 ) = Tx( 1:10,19:27);
+Ty(21:30,10:18) = Tx(11:20,19:27);
 for r = 1:size(Ty,1)
     if r > 20
         scn = r-20;

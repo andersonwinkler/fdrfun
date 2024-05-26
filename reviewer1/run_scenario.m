@@ -37,20 +37,23 @@ fdp_can     = zeros(numRealizations,1);
 fdp_com     = zeros(numRealizations,1);
 fdp_two     = zeros(numRealizations,1);
 fdp_spl     = zeros(numRealizations,1);
-fdp_reA     = zeros(numRealizations,1);
-fdp_reB     = zeros(numRealizations,1);
+fdp_Old     = zeros(numRealizations,1);
+fdp_Q11     = zeros(numRealizations,1);
+fdp_Q12     = zeros(numRealizations,1);
 fdp_can_pos = zeros(numRealizations,1);
 fdp_com_pos = zeros(numRealizations,1);
 fdp_two_pos = zeros(numRealizations,1);
 fdp_spl_pos = zeros(numRealizations,1);
-fdp_reA_pos = zeros(numRealizations,1);
-fdp_reB_pos = zeros(numRealizations,1);
+fdp_Old_pos = zeros(numRealizations,1);
+fdp_Q11_pos = zeros(numRealizations,1);
+fdp_Q12_pos = zeros(numRealizations,1);
 fdp_can_neg = zeros(numRealizations,1);
 fdp_com_neg = zeros(numRealizations,1);
 fdp_two_neg = zeros(numRealizations,1);
 fdp_spl_neg = zeros(numRealizations,1);
-fdp_reA_neg = zeros(numRealizations,1);
-fdp_reB_neg = zeros(numRealizations,1);
+fdp_Old_neg = zeros(numRealizations,1);
+fdp_Q11_neg = zeros(numRealizations,1);
+fdp_Q12_neg = zeros(numRealizations,1);
 
 % Choose functions for FDR and for the confidence intervals
 switch lower(FDRmethod)
@@ -115,19 +118,28 @@ for rlz = 1:numRealizations
     [~,~,adjspl(idxpos)] = fdrfun(pvals2(idxpos));
     [~,~,adjspl(idxneg)] = fdrfun(pvals2(idxneg));
 
-    % REVIEWER 1 - METHOD A
-    adjreA = 1-(1-adjspl).^2;
+    % FOR REVIEWER 1 - OLDER RESULT NOT SHOWN IN THE MANUSCRIPT
+    % Similar to combined, but do Sidak first (could have been Bonferroni)
+    psid1 = 1 - (pvals1).^2;
+    psid0 = 1 - (pvals0).^2;
+    [~,~,tmp1] = fdrfun(psid1);
+    [~,~,tmp2] = fdrfun(psid0);
+    adjOld = [tmp1;tmp2];
 
-    % REVIEWER 1 - METHOD B
-    adjreB = 1-(1-adjcan).^2;
+    % REVIEWER 1 - METHOD A - Question 11
+    adjQ11 = adjspl*2;
+
+    % REVIEWER 1 - METHOD B - Question 12
+    adjQ12 = adjcan*2;
 
     % Empirical FDRs (global, i.e., the user looks into both sides of the map)
     fdp_can(rlz) = sum((adjcan <= q) & ~ [maskPos;maskNeg]) / sum(adjcan <= q);
     fdp_com(rlz) = sum((adjcom <= q) & ~ [maskPos;maskNeg]) / sum(adjcom <= q);
     fdp_two(rlz) = sum((adjtwo <= q) & ~ (maskPos|maskNeg)) / sum(adjtwo <= q);
     fdp_spl(rlz) = sum((adjspl <= q) & ~ (maskPos|maskNeg)) / sum(adjspl <= q);
-    fdp_reA(rlz) = sum((adjreA <= q) & ~ (maskPos|maskNeg)) / sum(adjreA <= q);
-    fdp_reB(rlz) = sum((adjreB <= q) & ~ [maskPos;maskNeg]) / sum(adjreB <= q);
+    fdp_Old(rlz) = sum((adjOld <= q) & ~ [maskPos;maskNeg]) / sum(adjOld <= q);
+    fdp_Q11(rlz) = sum((adjQ11 <= q) & ~ (maskPos|maskNeg)) / sum(adjQ11 <= q);
+    fdp_Q12(rlz) = sum((adjQ12 <= q) & ~ [maskPos;maskNeg]) / sum(adjQ12 <= q);
 
     % Empirical FDRs (positive side of the map, i.e., user interested in positive results only, i.e., results that match the direction of the contrast)
     idxpoc = [idxpos;false(size(idxpos))];
@@ -135,8 +147,9 @@ for rlz = 1:numRealizations
     fdp_com_pos(rlz) = sum((adjcom (idxpoc) <= q) & ~ maskPos(idxpos)) / sum(adjcom (idxpoc) <= q);
     fdp_two_pos(rlz) = sum((adjtwo (idxpos) <= q) & ~ maskPos(idxpos)) / sum(adjtwo (idxpos) <= q);
     fdp_spl_pos(rlz) = sum((adjspl (idxpos) <= q) & ~ maskPos(idxpos)) / sum(adjspl (idxpos) <= q);
-    fdp_reA_pos(rlz) = sum((adjreA (idxpos) <= q) & ~ maskPos(idxpos)) / sum(adjreA (idxpos) <= q);
-    fdp_reB_pos(rlz) = sum((adjreB (idxpoc) <= q) & ~ maskPos(idxpos)) / sum(adjreB (idxpoc) <= q);
+    fdp_Old_pos(rlz) = sum((adjOld (idxpoc) <= q) & ~ maskPos(idxpos)) / sum(adjOld (idxpoc) <= q);
+    fdp_Q11_pos(rlz) = sum((adjQ11 (idxpos) <= q) & ~ maskPos(idxpos)) / sum(adjQ11 (idxpos) <= q);
+    fdp_Q12_pos(rlz) = sum((adjQ12 (idxpoc) <= q) & ~ maskPos(idxpos)) / sum(adjQ12 (idxpoc) <= q);
 
     % Empirical FDRs (negative side of the map, i.e., user interested in negative results only, i.e., results opposite to the direction of the contrast)
     idxnec = [false(size(idxneg));idxneg];
@@ -144,8 +157,9 @@ for rlz = 1:numRealizations
     fdp_com_neg(rlz) = sum((adjcom (idxnec) <= q) & ~ maskNeg(idxneg)) / sum(adjcom (idxnec) <= q);
     fdp_two_neg(rlz) = sum((adjtwo (idxneg) <= q) & ~ maskNeg(idxneg)) / sum(adjtwo (idxneg) <= q);
     fdp_spl_neg(rlz) = sum((adjspl (idxneg) <= q) & ~ maskNeg(idxneg)) / sum(adjspl (idxneg) <= q);
-    fdp_reA_neg(rlz) = sum((adjreA (idxneg) <= q) & ~ maskNeg(idxneg)) / sum(adjreA (idxneg) <= q);
-    fdp_reB_neg(rlz) = sum((adjreB (idxnec) <= q) & ~ maskNeg(idxneg)) / sum(adjreB (idxnec) <= q);
+    fdp_Old_neg(rlz) = sum((adjOld (idxnec) <= q) & ~ maskNeg(idxneg)) / sum(adjOld (idxnec) <= q);
+    fdp_Q11_neg(rlz) = sum((adjQ11 (idxneg) <= q) & ~ maskNeg(idxneg)) / sum(adjQ11 (idxneg) <= q);
+    fdp_Q12_neg(rlz) = sum((adjQ12 (idxnec) <= q) & ~ maskNeg(idxneg)) / sum(adjQ12 (idxnec) <= q);
 end
 
 % If the FDP is NaN, then there were no positives, which we'd interpret as
@@ -154,40 +168,46 @@ fdp_can     (isnan(fdp_can)) = 0;
 fdp_com     (isnan(fdp_com)) = 0;
 fdp_two     (isnan(fdp_two)) = 0;
 fdp_spl     (isnan(fdp_spl)) = 0;
-fdp_reA     (isnan(fdp_reA)) = 0;
-fdp_reB     (isnan(fdp_reB)) = 0;
+fdp_Old     (isnan(fdp_Old)) = 0;
+fdp_Q11     (isnan(fdp_Q11)) = 0;
+fdp_Q12     (isnan(fdp_Q12)) = 0;
 fdp_can_pos (isnan(fdp_can_pos)) = 0;
 fdp_com_pos (isnan(fdp_com_pos)) = 0;
 fdp_two_pos (isnan(fdp_two_pos)) = 0;
 fdp_spl_pos (isnan(fdp_spl_pos)) = 0;
-fdp_reA_pos (isnan(fdp_reA_pos)) = 0;
-fdp_reB_pos (isnan(fdp_reB_pos)) = 0;
+fdp_Old_pos (isnan(fdp_Old_pos)) = 0;
+fdp_Q11_pos (isnan(fdp_Q11_pos)) = 0;
+fdp_Q12_pos (isnan(fdp_Q12_pos)) = 0;
 fdp_can_neg (isnan(fdp_can_neg)) = 0;
 fdp_com_neg (isnan(fdp_com_neg)) = 0;
 fdp_two_neg (isnan(fdp_two_neg)) = 0;
 fdp_spl_neg (isnan(fdp_spl_neg)) = 0;
-fdp_reA_neg (isnan(fdp_reA_neg)) = 0;
-fdp_reB_neg (isnan(fdp_reB_neg)) = 0;
+fdp_Old_neg (isnan(fdp_Old_neg)) = 0;
+fdp_Q11_neg (isnan(fdp_Q11_neg)) = 0;
+fdp_Q12_neg (isnan(fdp_Q12_neg)) = 0;
 
 % Compute results
 J.BothSides.canonical  = [mean(fdp_can),     confint(fdp_can)];
 J.BothSides.combined   = [mean(fdp_com),     confint(fdp_com)];
 J.BothSides.twotailed  = [mean(fdp_two),     confint(fdp_two)];
 J.BothSides.split2tail = [mean(fdp_spl),     confint(fdp_spl)];
-J.BothSides.reviewerA  = [mean(fdp_reA),     confint(fdp_reA)];
-J.BothSides.reviewerB  = [mean(fdp_reB),     confint(fdp_reB)];
+J.BothSides.old        = [mean(fdp_Old),     confint(fdp_Old)];
+J.BothSides.question11 = [mean(fdp_Q11),     confint(fdp_Q11)];
+J.BothSides.question12 = [mean(fdp_Q12),     confint(fdp_Q12)];
 J.PosSide.canonical    = [mean(fdp_can_pos), confint(fdp_can_pos)];
 J.PosSide.combined     = [mean(fdp_com_pos), confint(fdp_com_pos)];
 J.PosSide.twotailed    = [mean(fdp_two_pos), confint(fdp_two_pos)];
 J.PosSide.split2tail   = [mean(fdp_spl_pos), confint(fdp_spl_pos)];
-J.PosSide.reviewerA    = [mean(fdp_reA_pos), confint(fdp_reA_pos)];
-J.PosSide.reviewerB    = [mean(fdp_reB_pos), confint(fdp_reB_pos)];
+J.PosSide.old          = [mean(fdp_Old_pos), confint(fdp_Old_pos)];
+J.PosSide.question11   = [mean(fdp_Q11_pos), confint(fdp_Q11_pos)];
+J.PosSide.question12   = [mean(fdp_Q12_pos), confint(fdp_Q12_pos)];
 J.NegSide.canonical    = [mean(fdp_can_neg), confint(fdp_can_neg)];
 J.NegSide.combined     = [mean(fdp_com_neg), confint(fdp_com_neg)];
 J.NegSide.twotailed    = [mean(fdp_two_neg), confint(fdp_two_neg)];
 J.NegSide.split2tail   = [mean(fdp_spl_neg), confint(fdp_spl_neg)];
-J.NegSide.reviewerA    = [mean(fdp_reA_neg), confint(fdp_reA_neg)];
-J.NegSide.reviewerB    = [mean(fdp_reB_neg), confint(fdp_reB_neg)];
+J.NegSide.old          = [mean(fdp_Old_neg), confint(fdp_Old_neg)];
+J.NegSide.question11   = [mean(fdp_Q11_neg), confint(fdp_Q11_neg)];
+J.NegSide.question12   = [mean(fdp_Q12_neg), confint(fdp_Q12_neg)];
 J.elapsed              = toc(st);
 
 % Write results
