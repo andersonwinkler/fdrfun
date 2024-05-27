@@ -1,0 +1,126 @@
+{
+  "scenario": 6,
+  "effectSize": 3,
+  "fracPos": 0,
+  "fracNeg": 0,
+  "rho": 0.25,
+  "FDRmethod": "BH1995",
+  "numTests": 2000,
+  "numRealizations": 2000,
+  "CImethod": "Wald",
+  "q": 0.05,
+  "alpha": 0.05,
+  "seed": "shuffle",
+  "BothSides": {
+    "canonical": [
+      null,
+      null,
+      null
+    ],
+    "combined": [
+      null,
+      null,
+      null
+    ],
+    "twotailed": [
+      null,
+      null,
+      null
+    ],
+    "split2tail": [
+      null,
+      null,
+      null
+    ],
+    "old": [
+      null,
+      null,
+      null
+    ],
+    "question11": [
+      null,
+      null,
+      null
+    ],
+    "question12": [
+      null,
+      null,
+      null
+    ]
+  },
+  "PosSide": {
+    "canonical": [
+      null,
+      null,
+      null
+    ],
+    "combined": [
+      null,
+      null,
+      null
+    ],
+    "twotailed": [
+      null,
+      null,
+      null
+    ],
+    "split2tail": [
+      null,
+      null,
+      null
+    ],
+    "old": [
+      null,
+      null,
+      null
+    ],
+    "question11": [
+      null,
+      null,
+      null
+    ],
+    "question12": [
+      null,
+      null,
+      null
+    ]
+  },
+  "NegSide": {
+    "canonical": [
+      null,
+      null,
+      null
+    ],
+    "combined": [
+      null,
+      null,
+      null
+    ],
+    "twotailed": [
+      null,
+      null,
+      null
+    ],
+    "split2tail": [
+      null,
+      null,
+      null
+    ],
+    "old": [
+      null,
+      null,
+      null
+    ],
+    "question11": [
+      null,
+      null,
+      null
+    ],
+    "question12": [
+      null,
+      null,
+      null
+    ]
+  },
+  "elapsed": 3.1166442083333332
+}

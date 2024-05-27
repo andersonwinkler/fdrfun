@@ -1,7 +1,7 @@
 [repodir,~,~] = fileparts(mfilename('fullpath'));
 
 % Load the table, sort
-T = readtable(fullfile(repodir,'summary_results.csv'));
+T = readtable(fullfile(repodir,'summary_results_fdp.csv'));
 T = sortrows(T,{'FDRmethod','scenario'},{'ascend','ascend'});
 
 % Select columns of interest, convert to percentages

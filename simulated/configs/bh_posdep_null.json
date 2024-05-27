@@ -3,6 +3,6 @@
   "effectSize": 0,
   "fracPos": 0,
   "fracNeg": 0,
-  "rho_sign": 1,
+  "rho": 0.25,
   "FDRmethod": "BH1995"
 }

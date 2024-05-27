@@ -4,7 +4,7 @@ function run_scenario(commonfile,scenariofile,outputfile)
 st = tic;
 
 % Read general configuration (common to all scenarios)
-J = readjson(commonfile);
+Jfdp = readjson(commonfile);
 
 % Read json with scenario configuration
 Js = readjson(scenariofile);
@@ -12,25 +12,26 @@ Js = readjson(scenariofile);
 % Merge them, for the outputs later
 F = fieldnames(Js);
 for f = 1:numel(F)
-    J.(F{f}) = Js.(F{f});
+    Jfdp.(F{f}) = Js.(F{f});
 end
 
 % Simulation parameters
 if isoctave()
-    rand('seed',J.seed) %#ok<RAND>
+    rand('seed',Jfdp.seed) %#ok<RAND>
 else
-    rng(J.seed);
+    rng(Jfdp.seed);
 end
-numTests        = J.numTests;        % number of "voxels"
-effectSize      = J.effectSize;      % z-stat that determines the synthetic effect size
-fracPos         = J.fracPos;         % fraction of tests with true positive effect
-fracNeg         = J.fracNeg;         % fraction of tests with true negative effect
-rho_sign        = J.rho_sign;        % sign of the compound symmetric correlation among the numTests
-q               = J.q;               % test level, E(FDR) to be controlled
-numRealizations = J.numRealizations; % number of times we repeat the simulation
-FDRmethod       = J.FDRmethod;       % use 'bh1995' or 'bky2006'
-CImethod        = J.CImethod;        % use 'Wald' or 'Wilson'
-alpha           = J.alpha;           % for the confidence interval
+numTests        = Jfdp.numTests;        % number of "voxels"
+effectSize      = Jfdp.effectSize;      % z-stat that determines the synthetic effect size
+fracPos         = Jfdp.fracPos;         % fraction of tests with true positive effect
+fracNeg         = Jfdp.fracNeg;         % fraction of tests with true negative effect
+rho             = Jfdp.rho;             % sign of the compound symmetric correlation among the numTests
+q               = Jfdp.q;               % test level, E(FDR) to be controlled
+numRealizations = Jfdp.numRealizations; % number of times we repeat the simulation
+FDRmethod       = Jfdp.FDRmethod;       % use 'bh1995' or 'bky2006'
+CImethod        = Jfdp.CImethod;        % use 'Wald' or 'Wilson'
+alpha           = Jfdp.alpha;           % for the confidence interval
+Jpwr            = Jfdp;                 % to save power
 
 % Vars for later
 fdp_can     = zeros(numRealizations,1);
@@ -54,6 +55,27 @@ fdp_spl_neg = zeros(numRealizations,1);
 fdp_Old_neg = zeros(numRealizations,1);
 fdp_Q11_neg = zeros(numRealizations,1);
 fdp_Q12_neg = zeros(numRealizations,1);
+pwr_can     = zeros(numRealizations,1);
+pwr_com     = zeros(numRealizations,1);
+pwr_two     = zeros(numRealizations,1);
+pwr_spl     = zeros(numRealizations,1);
+pwr_Old     = zeros(numRealizations,1);
+pwr_Q11     = zeros(numRealizations,1);
+pwr_Q12     = zeros(numRealizations,1);
+pwr_can_pos = zeros(numRealizations,1);
+pwr_com_pos = zeros(numRealizations,1);
+pwr_two_pos = zeros(numRealizations,1);
+pwr_spl_pos = zeros(numRealizations,1);
+pwr_Old_pos = zeros(numRealizations,1);
+pwr_Q11_pos = zeros(numRealizations,1);
+pwr_Q12_pos = zeros(numRealizations,1);
+pwr_can_neg = zeros(numRealizations,1);
+pwr_com_neg = zeros(numRealizations,1);
+pwr_two_neg = zeros(numRealizations,1);
+pwr_spl_neg = zeros(numRealizations,1);
+pwr_Old_neg = zeros(numRealizations,1);
+pwr_Q11_neg = zeros(numRealizations,1);
+pwr_Q12_neg = zeros(numRealizations,1);
 
 % Choose functions for FDR and for the confidence intervals
 switch lower(FDRmethod)
@@ -82,16 +104,11 @@ if numNeg >= 1
     signal(end-numNeg:end) = -effectSize;
 end
 
-% Compound symmetric correlation among the numTests
-rho = rho_sign/numTests;
-C   = ones(numTests)*rho + diag(ones(numTests,1)*(1-rho));
-R   = chol(C);
-
 % For each realization
 for rlz = 1:numRealizations
 
     % Create random data, add signal
-    zstats = signal + R'*randn(numTests,1);
+    zstats = signal + sqrt(1-rho)*randn(numTests,1) + sqrt(rho)*randn(1,1);
     idxpos = zstats > 0;
     idxneg = ~idxpos;
 
@@ -101,7 +118,7 @@ for rlz = 1:numRealizations
 
     % Two-tailed p-values
     pvals2 = 2*normcdf(abs(zstats),'upper');
-
+    
     % CANONICAL
     [~,~,adj1] = fdrfun(pvals0);
     [~,~,adj2] = fdrfun(pvals1);
@@ -109,7 +126,7 @@ for rlz = 1:numRealizations
 
     % COMBINED
     [~,~,adjcom] = fdrfun([pvals0;pvals1]);
-
+    
     % TWO-TAILED
     [~,~,adjtwo] = fdrfun(pvals2);
 
@@ -160,6 +177,33 @@ for rlz = 1:numRealizations
     fdp_Old_neg(rlz) = sum((adjOld (idxnec) <= q) & ~ maskNeg(idxneg)) / sum(adjOld (idxnec) <= q);
     fdp_Q11_neg(rlz) = sum((adjQ11 (idxneg) <= q) & ~ maskNeg(idxneg)) / sum(adjQ11 (idxneg) <= q);
     fdp_Q12_neg(rlz) = sum((adjQ12 (idxnec) <= q) & ~ maskNeg(idxneg)) / sum(adjQ12 (idxnec) <= q);
+
+    % Empirical power (global, i.e., user looks into both sides of the map)
+    pwr_can(rlz) = sum(adjcan <= q) / sum([maskPos;maskNeg]);
+    pwr_com(rlz) = sum(adjcom <= q) / sum([maskPos;maskNeg]);
+    pwr_two(rlz) = sum(adjtwo <= q) / sum((maskPos|maskNeg));
+    pwr_spl(rlz) = sum(adjspl <= q) / sum((maskPos|maskNeg));
+    pwr_Old(rlz) = sum(adjOld <= q) / sum([maskPos;maskNeg]);
+    pwr_Q11(rlz) = sum(adjQ11 <= q) / sum((maskPos|maskNeg));
+    pwr_Q12(rlz) = sum(adjQ12 <= q) / sum([maskPos;maskNeg]);
+
+    % Empirical power (positive side of the map)
+    pwr_can_pos(rlz) = sum(adjcan (idxpoc) <= q) / sum(maskPos(idxpos));
+    pwr_com_pos(rlz) = sum(adjcom (idxpoc) <= q) / sum(maskPos(idxpos));
+    pwr_two_pos(rlz) = sum(adjtwo (idxpos) <= q) / sum(maskPos(idxpos));
+    pwr_spl_pos(rlz) = sum(adjspl (idxpos) <= q) / sum(maskPos(idxpos));
+    pwr_Old_pos(rlz) = sum(adjcan (idxpoc) <= q) / sum(maskPos(idxpos));
+    pwr_Q11_pos(rlz) = sum(adjQ11 (idxpos) <= q) / sum(maskPos(idxpos));
+    pwr_Q12_pos(rlz) = sum(adjQ12 (idxpoc) <= q) / sum(maskPos(idxpos));
+
+    % Empirical power (negative side of the map)
+    pwr_can_neg(rlz) = sum(adjcan (idxnec) <= q) / sum(maskNeg(idxneg));
+    pwr_com_neg(rlz) = sum(adjcom (idxnec) <= q) / sum(maskNeg(idxneg));
+    pwr_two_neg(rlz) = sum(adjtwo (idxneg) <= q) / sum(maskNeg(idxneg));
+    pwr_spl_neg(rlz) = sum(adjspl (idxneg) <= q) / sum(maskNeg(idxneg));
+    pwr_Old_neg(rlz) = sum(adjOld (idxnec) <= q) / sum(maskNeg(idxneg));
+    pwr_Q11_neg(rlz) = sum(adjQ11 (idxneg) <= q) / sum(maskNeg(idxneg));
+    pwr_Q12_neg(rlz) = sum(adjQ12 (idxnec) <= q) / sum(maskNeg(idxneg));
 end
 
 % If the FDP is NaN, then there were no positives, which we'd interpret as
@@ -186,29 +230,75 @@ fdp_Old_neg (isnan(fdp_Old_neg)) = 0;
 fdp_Q11_neg (isnan(fdp_Q11_neg)) = 0;
 fdp_Q12_neg (isnan(fdp_Q12_neg)) = 0;
 
+% This is unnecessary for power but let's do anyway for symmetry
+pwr_can     (isnan(pwr_can)) = 0;
+pwr_com     (isnan(pwr_com)) = 0;
+pwr_two     (isnan(pwr_two)) = 0;
+pwr_spl     (isnan(pwr_spl)) = 0;
+pwr_Old     (isnan(pwr_Old)) = 0;
+pwr_Q11     (isnan(pwr_Q11)) = 0;
+pwr_Q12     (isnan(pwr_Q12)) = 0;
+pwr_can_pos (isnan(pwr_can_pos)) = 0;
+pwr_com_pos (isnan(pwr_com_pos)) = 0;
+pwr_two_pos (isnan(pwr_two_pos)) = 0;
+pwr_spl_pos (isnan(pwr_spl_pos)) = 0;
+pwr_Old_pos (isnan(pwr_Old_pos)) = 0;
+pwr_Q11_pos (isnan(pwr_Q11_pos)) = 0;
+pwr_Q12_pos (isnan(pwr_Q12_pos)) = 0;
+pwr_can_neg (isnan(pwr_can_neg)) = 0;
+pwr_com_neg (isnan(pwr_com_neg)) = 0;
+pwr_two_neg (isnan(pwr_two_neg)) = 0;
+pwr_spl_neg (isnan(pwr_spl_neg)) = 0;
+pwr_Old_neg (isnan(pwr_Old_neg)) = 0;
+pwr_Q11_neg (isnan(pwr_Q11_neg)) = 0;
+pwr_Q12_neg (isnan(pwr_Q12_neg)) = 0;
+
 % Compute results
-J.BothSides.canonical  = [mean(fdp_can),     confint(fdp_can)];
-J.BothSides.combined   = [mean(fdp_com),     confint(fdp_com)];
-J.BothSides.twotailed  = [mean(fdp_two),     confint(fdp_two)];
-J.BothSides.split2tail = [mean(fdp_spl),     confint(fdp_spl)];
-J.BothSides.old        = [mean(fdp_Old),     confint(fdp_Old)];
-J.BothSides.question11 = [mean(fdp_Q11),     confint(fdp_Q11)];
-J.BothSides.question12 = [mean(fdp_Q12),     confint(fdp_Q12)];
-J.PosSide.canonical    = [mean(fdp_can_pos), confint(fdp_can_pos)];
-J.PosSide.combined     = [mean(fdp_com_pos), confint(fdp_com_pos)];
-J.PosSide.twotailed    = [mean(fdp_two_pos), confint(fdp_two_pos)];
-J.PosSide.split2tail   = [mean(fdp_spl_pos), confint(fdp_spl_pos)];
-J.PosSide.old          = [mean(fdp_Old_pos), confint(fdp_Old_pos)];
-J.PosSide.question11   = [mean(fdp_Q11_pos), confint(fdp_Q11_pos)];
-J.PosSide.question12   = [mean(fdp_Q12_pos), confint(fdp_Q12_pos)];
-J.NegSide.canonical    = [mean(fdp_can_neg), confint(fdp_can_neg)];
-J.NegSide.combined     = [mean(fdp_com_neg), confint(fdp_com_neg)];
-J.NegSide.twotailed    = [mean(fdp_two_neg), confint(fdp_two_neg)];
-J.NegSide.split2tail   = [mean(fdp_spl_neg), confint(fdp_spl_neg)];
-J.NegSide.old          = [mean(fdp_Old_neg), confint(fdp_Old_neg)];
-J.NegSide.question11   = [mean(fdp_Q11_neg), confint(fdp_Q11_neg)];
-J.NegSide.question12   = [mean(fdp_Q12_neg), confint(fdp_Q12_neg)];
-J.elapsed              = toc(st);
+Jfdp.BothSides.canonical  = [mean(fdp_can),     confint(fdp_can)];
+Jfdp.BothSides.combined   = [mean(fdp_com),     confint(fdp_com)];
+Jfdp.BothSides.twotailed  = [mean(fdp_two),     confint(fdp_two)];
+Jfdp.BothSides.split2tail = [mean(fdp_spl),     confint(fdp_spl)];
+Jfdp.BothSides.old        = [mean(fdp_Old),     confint(fdp_Old)];
+Jfdp.BothSides.question11 = [mean(fdp_Q11),     confint(fdp_Q11)];
+Jfdp.BothSides.question12 = [mean(fdp_Q12),     confint(fdp_Q12)];
+Jfdp.PosSide.canonical    = [mean(fdp_can_pos), confint(fdp_can_pos)];
+Jfdp.PosSide.combined     = [mean(fdp_com_pos), confint(fdp_com_pos)];
+Jfdp.PosSide.twotailed    = [mean(fdp_two_pos), confint(fdp_two_pos)];
+Jfdp.PosSide.split2tail   = [mean(fdp_spl_pos), confint(fdp_spl_pos)];
+Jfdp.PosSide.old          = [mean(fdp_Old_pos), confint(fdp_Old_pos)];
+Jfdp.PosSide.question11   = [mean(fdp_Q11_pos), confint(fdp_Q11_pos)];
+Jfdp.PosSide.question12   = [mean(fdp_Q12_pos), confint(fdp_Q12_pos)];
+Jfdp.NegSide.canonical    = [mean(fdp_can_neg), confint(fdp_can_neg)];
+Jfdp.NegSide.combined     = [mean(fdp_com_neg), confint(fdp_com_neg)];
+Jfdp.NegSide.twotailed    = [mean(fdp_two_neg), confint(fdp_two_neg)];
+Jfdp.NegSide.split2tail   = [mean(fdp_spl_neg), confint(fdp_spl_neg)];
+Jfdp.NegSide.old          = [mean(fdp_Old_neg), confint(fdp_Old_neg)];
+Jfdp.NegSide.question11   = [mean(fdp_Q11_neg), confint(fdp_Q11_neg)];
+Jfdp.NegSide.question12   = [mean(fdp_Q12_neg), confint(fdp_Q12_neg)];
+Jfdp.elapsed              = toc(st);
+Jpwr.BothSides.canonical  = [mean(pwr_can),     confint(pwr_can)];
+Jpwr.BothSides.combined   = [mean(pwr_com),     confint(pwr_com)];
+Jpwr.BothSides.twotailed  = [mean(pwr_two),     confint(pwr_two)];
+Jpwr.BothSides.split2tail = [mean(pwr_spl),     confint(pwr_spl)];
+Jpwr.BothSides.old        = [mean(pwr_Old),     confint(pwr_Old)];
+Jpwr.BothSides.question11 = [mean(pwr_Q11),     confint(pwr_Q11)];
+Jpwr.BothSides.question12 = [mean(pwr_Q12),     confint(pwr_Q12)];
+Jpwr.PosSide.canonical    = [mean(pwr_can_pos), confint(pwr_can_pos)];
+Jpwr.PosSide.combined     = [mean(pwr_com_pos), confint(pwr_com_pos)];
+Jpwr.PosSide.twotailed    = [mean(pwr_two_pos), confint(pwr_two_pos)];
+Jpwr.PosSide.split2tail   = [mean(pwr_spl_pos), confint(pwr_spl_pos)];
+Jpwr.PosSide.old          = [mean(pwr_Old_pos), confint(pwr_Old_pos)];
+Jpwr.PosSide.question11   = [mean(pwr_Q11_pos), confint(pwr_Q11_pos)];
+Jpwr.PosSide.question12   = [mean(pwr_Q12_pos), confint(pwr_Q12_pos)];
+Jpwr.NegSide.canonical    = [mean(pwr_can_neg), confint(pwr_can_neg)];
+Jpwr.NegSide.combined     = [mean(pwr_com_neg), confint(pwr_com_neg)];
+Jpwr.NegSide.twotailed    = [mean(pwr_two_neg), confint(pwr_two_neg)];
+Jpwr.NegSide.split2tail   = [mean(pwr_spl_neg), confint(pwr_spl_neg)];
+Jpwr.NegSide.old          = [mean(pwr_Old_neg), confint(pwr_Old_neg)];
+Jpwr.NegSide.question11   = [mean(pwr_Q11_neg), confint(pwr_Q11_neg)];
+Jpwr.NegSide.question12   = [mean(pwr_Q12_neg), confint(pwr_Q12_neg)];
+Jpwr.elapsed              = toc(st);
 
 % Write results
-writejson(J,outputfile)
+writejson(Jfdp,strrep(outputfile,'.json','_fdp.json'));
+writejson(Jpwr,strrep(outputfile,'.json','_pwr.json'));
