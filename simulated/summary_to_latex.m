@@ -1,5 +1,5 @@
 [repodir,~,~] = fileparts(mfilename('fullpath'));
-
+noCI = true;
 % Load the table, sort
 T = readtable(fullfile(repodir,'summary_results_fdp.csv'));
 T = sortrows(T,{'FDRmethod','scenario'},{'ascend','ascend'});
@@ -29,6 +29,11 @@ Ty(11:20, 1:12) = Tx( 1:10,13:24);
 Ty(11:20,13:24) = Tx(11:20,13:24);
 Ty(21:30, 1:12) = Tx( 1:10,25:36);
 Ty(21:30,13:24) = Tx(11:20,25:36);
+
+if noCI
+    Ty = Ty(:,1:3:end);
+end
+
 for r = 1:size(Ty,1)
     if r > 20
         scn = r-20;
@@ -37,8 +42,14 @@ for r = 1:size(Ty,1)
     else
         scn = r;
     end
-    fprintf('\\textsc{%s}',lower(integer2roman(scn)));
-    fprintf(' & %0.1f \\scalebox{.7}[1.0]{(%0.1f--%0.1f)}', Ty(r,:));
+
+    if noCI
+        fprintf('%s',upper(integer2roman(scn)));
+        fprintf(' & %0.1f', Ty(r,:));
+    else
+        fprintf('\\textsc{%s}',lower(integer2roman(scn)));
+        fprintf(' & %0.1f \\scalebox{.7}[1.0]{(%0.1f--%0.1f)}', Ty(r,:));
+    end
     fprintf(' \\\\\n');
 end
 

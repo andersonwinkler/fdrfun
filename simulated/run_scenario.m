@@ -76,8 +76,8 @@ end
 % Signal to be added and where
 numPos  = round(numTests * fracPos);
 numNeg  = round(numTests * fracNeg);
-maskPos = (1:numTests)'    <= numPos;
-maskNeg = (numTests:-1:1)' <= numNeg;
+truePos = (1:numTests)'    <= numPos;
+trueNeg = (numTests:-1:1)' <= numNeg;
 signal  = zeros(numTests,1);
 if numPos >= 1
     signal(1:numPos) = effectSize;
@@ -91,8 +91,8 @@ for rlz = 1:numRealizations
 
     % Create random data, add signal
     zstats = signal + sqrt(1-rho)*randn(numTests,1) + sqrt(rho)*randn(1,1);
-    idxpos = zstats > 0;
-    idxneg = ~idxpos;
+    testPos = zstats > 0;
+    testNeg = ~testPos;
 
     % The usual pvalues, one-tailed
     pvals0 = normcdf(zstats,'upper');
@@ -114,46 +114,46 @@ for rlz = 1:numRealizations
 
     % SPLIT + TWO-TAILED
     adjspl = zeros(size(pvals0));
-    [~,~,adjspl(idxpos)] = fdrfun(pvals2(idxpos));
-    [~,~,adjspl(idxneg)] = fdrfun(pvals2(idxneg));
+    [~,~,adjspl(testPos)] = fdrfun(pvals2(testPos));
+    [~,~,adjspl(testNeg)] = fdrfun(pvals2(testNeg));
 
     % Empirical FDRs (global, i.e., the user looks into both sides of the map)
-    fdp_can(rlz) = sum((adjcan <= q) & ~ [maskPos;maskNeg]) / sum(adjcan <= q);
-    fdp_com(rlz) = sum((adjcom <= q) & ~ [maskPos;maskNeg]) / sum(adjcom <= q);
-    fdp_two(rlz) = sum((adjtwo <= q) & ~ (maskPos|maskNeg)) / sum(adjtwo <= q);
-    fdp_spl(rlz) = sum((adjspl <= q) & ~ (maskPos|maskNeg)) / sum(adjspl <= q);
+    fdp_can(rlz) = sum((adjcan <= q) & ~ [truePos;trueNeg]) / sum(adjcan <= q);
+    fdp_com(rlz) = sum((adjcom <= q) & ~ [truePos;trueNeg]) / sum(adjcom <= q);
+    fdp_two(rlz) = sum((adjtwo <= q) & ~ (truePos|trueNeg)) / sum(adjtwo <= q);
+    fdp_spl(rlz) = sum((adjspl <= q) & ~ (truePos|trueNeg)) / sum(adjspl <= q);
 
     % Empirical FDRs (positive side of the map, i.e., user interested in positive results only, i.e., results that match the direction of the contrast)
-    idxpoc = [idxpos;false(size(idxpos))];
-    fdp_can_pos(rlz) = sum((adjcan (idxpoc) <= q) & ~ maskPos(idxpos)) / sum(adjcan (idxpoc) <= q);
-    fdp_com_pos(rlz) = sum((adjcom (idxpoc) <= q) & ~ maskPos(idxpos)) / sum(adjcom (idxpoc) <= q);
-    fdp_two_pos(rlz) = sum((adjtwo (idxpos) <= q) & ~ maskPos(idxpos)) / sum(adjtwo (idxpos) <= q);
-    fdp_spl_pos(rlz) = sum((adjspl (idxpos) <= q) & ~ maskPos(idxpos)) / sum(adjspl (idxpos) <= q);
+    testPoc = [testPos;false(size(testPos))];
+    fdp_can_pos(rlz) = sum((adjcan (testPoc) <= q) & ~ truePos(testPos)) / sum(adjcan (testPoc) <= q);
+    fdp_com_pos(rlz) = sum((adjcom (testPoc) <= q) & ~ truePos(testPos)) / sum(adjcom (testPoc) <= q);
+    fdp_two_pos(rlz) = sum((adjtwo (testPos) <= q) & ~ truePos(testPos)) / sum(adjtwo (testPos) <= q);
+    fdp_spl_pos(rlz) = sum((adjspl (testPos) <= q) & ~ truePos(testPos)) / sum(adjspl (testPos) <= q);
 
     % Empirical FDRs (negative side of the map, i.e., user interested in negative results only, i.e., results opposite to the direction of the contrast)
-    idxnec = [false(size(idxneg));idxneg];
-    fdp_can_neg(rlz) = sum((adjcan (idxnec) <= q) & ~ maskNeg(idxneg)) / sum(adjcan (idxnec) <= q);
-    fdp_com_neg(rlz) = sum((adjcom (idxnec) <= q) & ~ maskNeg(idxneg)) / sum(adjcom (idxnec) <= q);
-    fdp_two_neg(rlz) = sum((adjtwo (idxneg) <= q) & ~ maskNeg(idxneg)) / sum(adjtwo (idxneg) <= q);
-    fdp_spl_neg(rlz) = sum((adjspl (idxneg) <= q) & ~ maskNeg(idxneg)) / sum(adjspl (idxneg) <= q);
+    testNec = [false(size(testNeg));testNeg];
+    fdp_can_neg(rlz) = sum((adjcan (testNec) <= q) & ~ trueNeg(testNeg)) / sum(adjcan (testNec) <= q);
+    fdp_com_neg(rlz) = sum((adjcom (testNec) <= q) & ~ trueNeg(testNeg)) / sum(adjcom (testNec) <= q);
+    fdp_two_neg(rlz) = sum((adjtwo (testNeg) <= q) & ~ trueNeg(testNeg)) / sum(adjtwo (testNeg) <= q);
+    fdp_spl_neg(rlz) = sum((adjspl (testNeg) <= q) & ~ trueNeg(testNeg)) / sum(adjspl (testNeg) <= q);
 
     % Empirical power (global, i.e., user looks into both sides of the map)
-    pwr_can(rlz) = sum(adjcan <= q) / sum([maskPos;maskNeg]);
-    pwr_com(rlz) = sum(adjcom <= q) / sum([maskPos;maskNeg]);
-    pwr_two(rlz) = sum(adjtwo <= q) / sum((maskPos|maskNeg));
-    pwr_spl(rlz) = sum(adjspl <= q) / sum((maskPos|maskNeg));
+    pwr_can(rlz) = sum(adjcan <= q) / sum([truePos;trueNeg]);
+    pwr_com(rlz) = sum(adjcom <= q) / sum([truePos;trueNeg]);
+    pwr_two(rlz) = sum(adjtwo <= q) / sum((truePos|trueNeg));
+    pwr_spl(rlz) = sum(adjspl <= q) / sum((truePos|trueNeg));
 
     % Empirical power (positive side of the map)
-    pwr_can_pos(rlz) = sum(adjcan (idxpoc) <= q) / sum(maskPos(idxpos));
-    pwr_com_pos(rlz) = sum(adjcom (idxpoc) <= q) / sum(maskPos(idxpos));
-    pwr_two_pos(rlz) = sum(adjtwo (idxpos) <= q) / sum(maskPos(idxpos));
-    pwr_spl_pos(rlz) = sum(adjspl (idxpos) <= q) / sum(maskPos(idxpos));
+    pwr_can_pos(rlz) = sum(adjcan (testPoc) <= q) / sum(truePos(testPos));
+    pwr_com_pos(rlz) = sum(adjcom (testPoc) <= q) / sum(truePos(testPos));
+    pwr_two_pos(rlz) = sum(adjtwo (testPos) <= q) / sum(truePos(testPos));
+    pwr_spl_pos(rlz) = sum(adjspl (testPos) <= q) / sum(truePos(testPos));
 
     % Empirical power (negative side of the map)
-    pwr_can_neg(rlz) = sum(adjcan (idxnec) <= q) / sum(maskNeg(idxneg));
-    pwr_com_neg(rlz) = sum(adjcom (idxnec) <= q) / sum(maskNeg(idxneg));
-    pwr_two_neg(rlz) = sum(adjtwo (idxneg) <= q) / sum(maskNeg(idxneg));
-    pwr_spl_neg(rlz) = sum(adjspl (idxneg) <= q) / sum(maskNeg(idxneg));
+    pwr_can_neg(rlz) = sum(adjcan (testNec) <= q) / sum(trueNeg(testNeg));
+    pwr_com_neg(rlz) = sum(adjcom (testNec) <= q) / sum(trueNeg(testNeg));
+    pwr_two_neg(rlz) = sum(adjtwo (testNeg) <= q) / sum(trueNeg(testNeg));
+    pwr_spl_neg(rlz) = sum(adjspl (testNeg) <= q) / sum(trueNeg(testNeg));
 end
 
 % If the FDP is NaN, then there were no positives, which we'd interpret as
