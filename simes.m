@@ -88,7 +88,7 @@ varargout{1} = thr;
 
 if nargout == 2
     
-    % p-corrected
+    % p-adjusted
     padj = min(pval.*V./idx);
     varargout{2} = padj;
 end
