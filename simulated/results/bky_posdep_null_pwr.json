@@ -31,6 +31,16 @@
       null,
       null,
       null
+    ],
+    "canonicalbb": [
+      null,
+      null,
+      null
+    ],
+    "split2tailbb": [
+      null,
+      null,
+      null
     ]
   },
   "PosSide": {
@@ -50,6 +60,16 @@
       null
     ],
     "split2tail": [
+      null,
+      null,
+      null
+    ],
+    "canonicalbb": [
+      null,
+      null,
+      null
+    ],
+    "split2tailbb": [
       null,
       null,
       null
@@ -75,7 +95,17 @@
       null,
       null,
       null
+    ],
+    "canonicalbb": [
+      null,
+      null,
+      null
+    ],
+    "split2tailbb": [
+      null,
+      null,
+      null
     ]
   },
-  "elapsed": 87.707560041666667
+  "elapsed": 130.05400320833334
 }

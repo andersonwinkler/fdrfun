@@ -34,30 +34,42 @@ alpha           = Jfdp.alpha;           % for the confidence interval
 Jpwr            = Jfdp;                 % to save power
 
 % Vars for later
-fdp_can     = zeros(numRealizations,1);
-fdp_com     = zeros(numRealizations,1);
-fdp_two     = zeros(numRealizations,1);
-fdp_spl     = zeros(numRealizations,1);
-fdp_can_pos = zeros(numRealizations,1);
-fdp_com_pos = zeros(numRealizations,1);
-fdp_two_pos = zeros(numRealizations,1);
-fdp_spl_pos = zeros(numRealizations,1);
-fdp_can_neg = zeros(numRealizations,1);
-fdp_com_neg = zeros(numRealizations,1);
-fdp_two_neg = zeros(numRealizations,1);
-fdp_spl_neg = zeros(numRealizations,1);
-pwr_can     = zeros(numRealizations,1);
-pwr_com     = zeros(numRealizations,1);
-pwr_two     = zeros(numRealizations,1);
-pwr_spl     = zeros(numRealizations,1);
-pwr_can_pos = zeros(numRealizations,1);
-pwr_com_pos = zeros(numRealizations,1);
-pwr_two_pos = zeros(numRealizations,1);
-pwr_spl_pos = zeros(numRealizations,1);
-pwr_can_neg = zeros(numRealizations,1);
-pwr_com_neg = zeros(numRealizations,1);
-pwr_two_neg = zeros(numRealizations,1);
-pwr_spl_neg = zeros(numRealizations,1);
+fdp_can       = zeros(numRealizations,1);
+fdp_com       = zeros(numRealizations,1);
+fdp_two       = zeros(numRealizations,1);
+fdp_spl       = zeros(numRealizations,1);
+fdp_canbb     = zeros(numRealizations,1);
+fdp_splbb     = zeros(numRealizations,1);
+fdp_can_pos   = zeros(numRealizations,1);
+fdp_com_pos   = zeros(numRealizations,1);
+fdp_two_pos   = zeros(numRealizations,1);
+fdp_spl_pos   = zeros(numRealizations,1);
+fdp_canbb_pos = zeros(numRealizations,1);
+fdp_splbb_pos = zeros(numRealizations,1);
+fdp_can_neg   = zeros(numRealizations,1);
+fdp_com_neg   = zeros(numRealizations,1);
+fdp_two_neg   = zeros(numRealizations,1);
+fdp_spl_neg   = zeros(numRealizations,1);
+fdp_canbb_neg = zeros(numRealizations,1);
+fdp_splbb_neg = zeros(numRealizations,1);
+pwr_can       = zeros(numRealizations,1);
+pwr_com       = zeros(numRealizations,1);
+pwr_two       = zeros(numRealizations,1);
+pwr_spl       = zeros(numRealizations,1);
+pwr_canbb     = zeros(numRealizations,1);
+pwr_splbb     = zeros(numRealizations,1);
+pwr_can_pos   = zeros(numRealizations,1);
+pwr_com_pos   = zeros(numRealizations,1);
+pwr_two_pos   = zeros(numRealizations,1);
+pwr_spl_pos   = zeros(numRealizations,1);
+pwr_canbb_pos = zeros(numRealizations,1);
+pwr_splbb_pos = zeros(numRealizations,1);
+pwr_can_neg   = zeros(numRealizations,1);
+pwr_com_neg   = zeros(numRealizations,1);
+pwr_two_neg   = zeros(numRealizations,1);
+pwr_spl_neg   = zeros(numRealizations,1);
+pwr_canbb_neg = zeros(numRealizations,1);
+pwr_splbb_neg = zeros(numRealizations,1);
 
 % Choose functions for FDR and for the confidence intervals
 switch lower(FDRmethod)
@@ -106,6 +118,11 @@ for rlz = 1:numRealizations
     [~,~,adj2] = fdrfun(pvals1);
     adjcan = [adj1;adj2];
 
+    % CANONICAL + BB2014
+    Pset = [pvals0';pvals1'];
+    [~,~,adjcanbb] = bb2014(Pset,[],fdrfun);
+    adjcanbb = [adjcanbb(1,:) adjcanbb(2,:)]';
+
     % COMBINED
     [~,~,adjcom] = fdrfun([pvals0;pvals1]);
     
@@ -117,101 +134,144 @@ for rlz = 1:numRealizations
     [~,~,adjspl(testPos)] = fdrfun(pvals2(testPos));
     [~,~,adjspl(testNeg)] = fdrfun(pvals2(testNeg));
 
+    % SPLIT + TWO-TAILED + BB2014
+    Pset = {pvals2(testPos), pvals2(testNeg)};
+    [~,~,tmp] = bb2014(Pset,[],fdrfun);
+    adjsplbb = zeros(size(pvals0));
+    adjsplbb(testPos) = tmp{1};
+    adjsplbb(testNeg) = tmp{2};
+
     % Empirical FDRs (global, i.e., the user looks into both sides of the map)
-    fdp_can(rlz) = sum((adjcan <= q) & ~ [truePos;trueNeg]) / sum(adjcan <= q);
-    fdp_com(rlz) = sum((adjcom <= q) & ~ [truePos;trueNeg]) / sum(adjcom <= q);
-    fdp_two(rlz) = sum((adjtwo <= q) & ~ (truePos|trueNeg)) / sum(adjtwo <= q);
-    fdp_spl(rlz) = sum((adjspl <= q) & ~ (truePos|trueNeg)) / sum(adjspl <= q);
+    fdp_can  (rlz) = sum((adjcan   <= q) & ~ [truePos;trueNeg]) / sum(adjcan   <= q);
+    fdp_com  (rlz) = sum((adjcom   <= q) & ~ [truePos;trueNeg]) / sum(adjcom   <= q);
+    fdp_two  (rlz) = sum((adjtwo   <= q) & ~ (truePos|trueNeg)) / sum(adjtwo   <= q);
+    fdp_spl  (rlz) = sum((adjspl   <= q) & ~ (truePos|trueNeg)) / sum(adjspl   <= q);
+    fdp_canbb(rlz) = sum((adjcanbb <= q) & ~ [truePos;trueNeg]) / sum(adjcanbb <= q);
+    fdp_splbb(rlz) = sum((adjsplbb <= q) & ~ (truePos|trueNeg)) / sum(adjsplbb <= q);
 
     % Empirical FDRs (positive side of the map, i.e., user interested in positive results only, i.e., results that match the direction of the contrast)
     testPoc = [testPos;false(size(testPos))];
-    fdp_can_pos(rlz) = sum((adjcan (testPoc) <= q) & ~ truePos(testPos)) / sum(adjcan (testPoc) <= q);
-    fdp_com_pos(rlz) = sum((adjcom (testPoc) <= q) & ~ truePos(testPos)) / sum(adjcom (testPoc) <= q);
-    fdp_two_pos(rlz) = sum((adjtwo (testPos) <= q) & ~ truePos(testPos)) / sum(adjtwo (testPos) <= q);
-    fdp_spl_pos(rlz) = sum((adjspl (testPos) <= q) & ~ truePos(testPos)) / sum(adjspl (testPos) <= q);
+    fdp_can_pos(rlz)   = sum((adjcan  (testPoc) <= q) & ~ truePos(testPos)) / sum(adjcan  (testPoc) <= q);
+    fdp_com_pos(rlz)   = sum((adjcom  (testPoc) <= q) & ~ truePos(testPos)) / sum(adjcom  (testPoc) <= q);
+    fdp_two_pos(rlz)   = sum((adjtwo  (testPos) <= q) & ~ truePos(testPos)) / sum(adjtwo  (testPos) <= q);
+    fdp_spl_pos(rlz)   = sum((adjspl  (testPos) <= q) & ~ truePos(testPos)) / sum(adjspl  (testPos) <= q);
+    fdp_canbb_pos(rlz) = sum((adjcanbb(testPoc) <= q) & ~ truePos(testPos)) / sum(adjcanbb(testPoc) <= q);
+    fdp_splbb_pos(rlz) = sum((adjsplbb(testPos) <= q) & ~ truePos(testPos)) / sum(adjsplbb(testPos) <= q);
 
     % Empirical FDRs (negative side of the map, i.e., user interested in negative results only, i.e., results opposite to the direction of the contrast)
     testNec = [false(size(testNeg));testNeg];
-    fdp_can_neg(rlz) = sum((adjcan (testNec) <= q) & ~ trueNeg(testNeg)) / sum(adjcan (testNec) <= q);
-    fdp_com_neg(rlz) = sum((adjcom (testNec) <= q) & ~ trueNeg(testNeg)) / sum(adjcom (testNec) <= q);
-    fdp_two_neg(rlz) = sum((adjtwo (testNeg) <= q) & ~ trueNeg(testNeg)) / sum(adjtwo (testNeg) <= q);
-    fdp_spl_neg(rlz) = sum((adjspl (testNeg) <= q) & ~ trueNeg(testNeg)) / sum(adjspl (testNeg) <= q);
+    fdp_can_neg(rlz)   = sum((adjcan  (testNec) <= q) & ~ trueNeg(testNeg)) / sum(adjcan  (testNec) <= q);
+    fdp_com_neg(rlz)   = sum((adjcom  (testNec) <= q) & ~ trueNeg(testNeg)) / sum(adjcom  (testNec) <= q);
+    fdp_two_neg(rlz)   = sum((adjtwo  (testNeg) <= q) & ~ trueNeg(testNeg)) / sum(adjtwo  (testNeg) <= q);
+    fdp_spl_neg(rlz)   = sum((adjspl  (testNeg) <= q) & ~ trueNeg(testNeg)) / sum(adjspl  (testNeg) <= q);
+    fdp_canbb_neg(rlz) = sum((adjcanbb(testNec) <= q) & ~ trueNeg(testNeg)) / sum(adjcanbb(testNec) <= q);
+    fdp_splbb_neg(rlz) = sum((adjsplbb(testNeg) <= q) & ~ trueNeg(testNeg)) / sum(adjsplbb(testNeg) <= q);
 
     % Empirical power (global, i.e., user looks into both sides of the map)
-    pwr_can(rlz) = sum(adjcan <= q) / sum([truePos;trueNeg]);
-    pwr_com(rlz) = sum(adjcom <= q) / sum([truePos;trueNeg]);
-    pwr_two(rlz) = sum(adjtwo <= q) / sum((truePos|trueNeg));
-    pwr_spl(rlz) = sum(adjspl <= q) / sum((truePos|trueNeg));
+    pwr_can  (rlz) = sum(adjcan   <= q) / sum([truePos;trueNeg]);
+    pwr_com  (rlz) = sum(adjcom   <= q) / sum([truePos;trueNeg]);
+    pwr_two  (rlz) = sum(adjtwo   <= q) / sum((truePos|trueNeg));
+    pwr_spl  (rlz) = sum(adjspl   <= q) / sum((truePos|trueNeg));
+    pwr_canbb(rlz) = sum(adjcanbb <= q) / sum([truePos;trueNeg]);
+    pwr_splbb(rlz) = sum(adjsplbb <= q) / sum((truePos|trueNeg));
 
     % Empirical power (positive side of the map)
-    pwr_can_pos(rlz) = sum(adjcan (testPoc) <= q) / sum(truePos(testPos));
-    pwr_com_pos(rlz) = sum(adjcom (testPoc) <= q) / sum(truePos(testPos));
-    pwr_two_pos(rlz) = sum(adjtwo (testPos) <= q) / sum(truePos(testPos));
-    pwr_spl_pos(rlz) = sum(adjspl (testPos) <= q) / sum(truePos(testPos));
+    pwr_can_pos  (rlz) = sum(adjcan  (testPoc) <= q) / sum(truePos(testPos));
+    pwr_com_pos  (rlz) = sum(adjcom  (testPoc) <= q) / sum(truePos(testPos));
+    pwr_two_pos  (rlz) = sum(adjtwo  (testPos) <= q) / sum(truePos(testPos));
+    pwr_spl_pos  (rlz) = sum(adjspl  (testPos) <= q) / sum(truePos(testPos));
+    pwr_canbb_pos(rlz) = sum(adjcanbb(testPoc) <= q) / sum(truePos(testPos));
+    pwr_splbb_pos(rlz) = sum(adjsplbb(testPos) <= q) / sum(truePos(testPos));
 
     % Empirical power (negative side of the map)
-    pwr_can_neg(rlz) = sum(adjcan (testNec) <= q) / sum(trueNeg(testNeg));
-    pwr_com_neg(rlz) = sum(adjcom (testNec) <= q) / sum(trueNeg(testNeg));
-    pwr_two_neg(rlz) = sum(adjtwo (testNeg) <= q) / sum(trueNeg(testNeg));
-    pwr_spl_neg(rlz) = sum(adjspl (testNeg) <= q) / sum(trueNeg(testNeg));
+    pwr_can_neg  (rlz) = sum(adjcan  (testNec) <= q) / sum(trueNeg(testNeg));
+    pwr_com_neg  (rlz) = sum(adjcom  (testNec) <= q) / sum(trueNeg(testNeg));
+    pwr_two_neg  (rlz) = sum(adjtwo  (testNeg) <= q) / sum(trueNeg(testNeg));
+    pwr_spl_neg  (rlz) = sum(adjspl  (testNeg) <= q) / sum(trueNeg(testNeg));
+    pwr_canbb_neg(rlz) = sum(adjcanbb(testNec) <= q) / sum(trueNeg(testNeg));
+    pwr_splbb_neg(rlz) = sum(adjsplbb(testNeg) <= q) / sum(trueNeg(testNeg));
 end
 
 % If the FDP is NaN, then there were no positives, which we'd interpret as
 % zero false positives (as opposed to 0/0 false positives)
-fdp_can     (isnan(fdp_can)) = 0;
-fdp_com     (isnan(fdp_com)) = 0;
-fdp_two     (isnan(fdp_two)) = 0;
-fdp_spl     (isnan(fdp_spl)) = 0;
-fdp_can_pos (isnan(fdp_can_pos)) = 0;
-fdp_com_pos (isnan(fdp_com_pos)) = 0;
-fdp_two_pos (isnan(fdp_two_pos)) = 0;
-fdp_spl_pos (isnan(fdp_spl_pos)) = 0;
-fdp_can_neg (isnan(fdp_can_neg)) = 0;
-fdp_com_neg (isnan(fdp_com_neg)) = 0;
-fdp_two_neg (isnan(fdp_two_neg)) = 0;
-fdp_spl_neg (isnan(fdp_spl_neg)) = 0;
+fdp_can      (isnan(fdp_can      )) = 0;
+fdp_com      (isnan(fdp_com      )) = 0;
+fdp_two      (isnan(fdp_two      )) = 0;
+fdp_spl      (isnan(fdp_spl      )) = 0;
+fdp_canbb    (isnan(fdp_canbb    )) = 0;
+fdp_splbb    (isnan(fdp_splbb    )) = 0;
+fdp_can_pos  (isnan(fdp_can_pos  )) = 0;
+fdp_com_pos  (isnan(fdp_com_pos  )) = 0;
+fdp_two_pos  (isnan(fdp_two_pos  )) = 0;
+fdp_spl_pos  (isnan(fdp_spl_pos  )) = 0;
+fdp_canbb_pos(isnan(fdp_canbb_pos)) = 0;
+fdp_splbb_pos(isnan(fdp_splbb_pos)) = 0;
+fdp_can_neg  (isnan(fdp_can_neg  )) = 0;
+fdp_com_neg  (isnan(fdp_com_neg  )) = 0;
+fdp_two_neg  (isnan(fdp_two_neg  )) = 0;
+fdp_spl_neg  (isnan(fdp_spl_neg  )) = 0;
+fdp_canbb_neg(isnan(fdp_canbb_neg)) = 0;
+fdp_splbb_neg(isnan(fdp_splbb_neg)) = 0;
 
 % This is unnecessary for power but let's do anyway for symmetry
-pwr_can     (isnan(pwr_can)) = 0;
-pwr_com     (isnan(pwr_com)) = 0;
-pwr_two     (isnan(pwr_two)) = 0;
-pwr_spl     (isnan(pwr_spl)) = 0;
-pwr_can_pos (isnan(pwr_can_pos)) = 0;
-pwr_com_pos (isnan(pwr_com_pos)) = 0;
-pwr_two_pos (isnan(pwr_two_pos)) = 0;
-pwr_spl_pos (isnan(pwr_spl_pos)) = 0;
-pwr_can_neg (isnan(pwr_can_neg)) = 0;
-pwr_com_neg (isnan(pwr_com_neg)) = 0;
-pwr_two_neg (isnan(pwr_two_neg)) = 0;
-pwr_spl_neg (isnan(pwr_spl_neg)) = 0;
+pwr_can      (isnan(pwr_can      )) = 0;
+pwr_com      (isnan(pwr_com      )) = 0;
+pwr_two      (isnan(pwr_two      )) = 0;
+pwr_spl      (isnan(pwr_spl      )) = 0;
+pwr_canbb    (isnan(pwr_canbb    )) = 0;
+pwr_splbb    (isnan(pwr_splbb    )) = 0;
+pwr_can_pos  (isnan(pwr_can_pos  )) = 0;
+pwr_com_pos  (isnan(pwr_com_pos  )) = 0;
+pwr_two_pos  (isnan(pwr_two_pos  )) = 0;
+pwr_spl_pos  (isnan(pwr_spl_pos  )) = 0;
+pwr_canbb_pos(isnan(pwr_canbb_pos)) = 0;
+pwr_splbb_pos(isnan(pwr_splbb_pos)) = 0;
+pwr_can_neg  (isnan(pwr_can_neg  )) = 0;
+pwr_com_neg  (isnan(pwr_com_neg  )) = 0;
+pwr_two_neg  (isnan(pwr_two_neg  )) = 0;
+pwr_spl_neg  (isnan(pwr_spl_neg  )) = 0;
+pwr_canbb_neg(isnan(pwr_canbb_neg)) = 0;
+pwr_splbb_neg(isnan(pwr_splbb_neg)) = 0;
 
 % Compute results
-Jfdp.BothSides.canonical  = [mean(fdp_can),     confint(fdp_can)];
-Jfdp.BothSides.combined   = [mean(fdp_com),     confint(fdp_com)];
-Jfdp.BothSides.twotailed  = [mean(fdp_two),     confint(fdp_two)];
-Jfdp.BothSides.split2tail = [mean(fdp_spl),     confint(fdp_spl)];
-Jfdp.PosSide.canonical    = [mean(fdp_can_pos), confint(fdp_can_pos)];
-Jfdp.PosSide.combined     = [mean(fdp_com_pos), confint(fdp_com_pos)];
-Jfdp.PosSide.twotailed    = [mean(fdp_two_pos), confint(fdp_two_pos)];
-Jfdp.PosSide.split2tail   = [mean(fdp_spl_pos), confint(fdp_spl_pos)];
-Jfdp.NegSide.canonical    = [mean(fdp_can_neg), confint(fdp_can_neg)];
-Jfdp.NegSide.combined     = [mean(fdp_com_neg), confint(fdp_com_neg)];
-Jfdp.NegSide.twotailed    = [mean(fdp_two_neg), confint(fdp_two_neg)];
-Jfdp.NegSide.split2tail   = [mean(fdp_spl_neg), confint(fdp_spl_neg)];
-Jfdp.elapsed              = toc(st);
-Jpwr.BothSides.canonical  = [mean(pwr_can),     confint(pwr_can)];
-Jpwr.BothSides.combined   = [mean(pwr_com),     confint(pwr_com)];
-Jpwr.BothSides.twotailed  = [mean(pwr_two),     confint(pwr_two)];
-Jpwr.BothSides.split2tail = [mean(pwr_spl),     confint(pwr_spl)];
-Jpwr.PosSide.canonical    = [mean(pwr_can_pos), confint(pwr_can_pos)];
-Jpwr.PosSide.combined     = [mean(pwr_com_pos), confint(pwr_com_pos)];
-Jpwr.PosSide.twotailed    = [mean(pwr_two_pos), confint(pwr_two_pos)];
-Jpwr.PosSide.split2tail   = [mean(pwr_spl_pos), confint(pwr_spl_pos)];
-Jpwr.NegSide.canonical    = [mean(pwr_can_neg), confint(pwr_can_neg)];
-Jpwr.NegSide.combined     = [mean(pwr_com_neg), confint(pwr_com_neg)];
-Jpwr.NegSide.twotailed    = [mean(pwr_two_neg), confint(pwr_two_neg)];
-Jpwr.NegSide.split2tail   = [mean(pwr_spl_neg), confint(pwr_spl_neg)];
-Jpwr.elapsed              = toc(st);
+Jfdp.BothSides.canonical    = [mean(fdp_can),       confint(fdp_can)];
+Jfdp.BothSides.combined     = [mean(fdp_com),       confint(fdp_com)];
+Jfdp.BothSides.twotailed    = [mean(fdp_two),       confint(fdp_two)];
+Jfdp.BothSides.split2tail   = [mean(fdp_spl),       confint(fdp_spl)];
+Jfdp.BothSides.canonicalbb  = [mean(fdp_canbb),     confint(fdp_canbb)];
+Jfdp.BothSides.split2tailbb = [mean(fdp_splbb),     confint(fdp_splbb)];
+Jfdp.PosSide.canonical      = [mean(fdp_can_pos),   confint(fdp_can_pos)];
+Jfdp.PosSide.combined       = [mean(fdp_com_pos),   confint(fdp_com_pos)];
+Jfdp.PosSide.twotailed      = [mean(fdp_two_pos),   confint(fdp_two_pos)];
+Jfdp.PosSide.split2tail     = [mean(fdp_spl_pos),   confint(fdp_spl_pos)];
+Jfdp.PosSide.canonicalbb    = [mean(fdp_canbb_pos), confint(fdp_canbb_pos)];
+Jfdp.PosSide.split2tailbb   = [mean(fdp_splbb_pos), confint(fdp_splbb_pos)];
+Jfdp.NegSide.canonical      = [mean(fdp_can_neg),   confint(fdp_can_neg)];
+Jfdp.NegSide.combined       = [mean(fdp_com_neg),   confint(fdp_com_neg)];
+Jfdp.NegSide.twotailed      = [mean(fdp_two_neg),   confint(fdp_two_neg)];
+Jfdp.NegSide.split2tail     = [mean(fdp_spl_neg),   confint(fdp_spl_neg)];
+Jfdp.NegSide.canonicalbb    = [mean(fdp_canbb_neg), confint(fdp_canbb_neg)];
+Jfdp.NegSide.split2tailbb   = [mean(fdp_splbb_neg), confint(fdp_splbb_neg)];
+Jfdp.elapsed                = toc(st);
+Jpwr.BothSides.canonical    = [mean(pwr_can),       confint(pwr_can)];
+Jpwr.BothSides.combined     = [mean(pwr_com),       confint(pwr_com)];
+Jpwr.BothSides.twotailed    = [mean(pwr_two),       confint(pwr_two)];
+Jpwr.BothSides.split2tail   = [mean(pwr_spl),       confint(pwr_spl)];
+Jpwr.BothSides.canonicalbb  = [mean(pwr_canbb),     confint(pwr_canbb)];
+Jpwr.BothSides.split2tailbb = [mean(pwr_splbb),     confint(pwr_splbb)];
+Jpwr.PosSide.canonical      = [mean(pwr_can_pos),   confint(pwr_can_pos)];
+Jpwr.PosSide.combined       = [mean(pwr_com_pos),   confint(pwr_com_pos)];
+Jpwr.PosSide.twotailed      = [mean(pwr_two_pos),   confint(pwr_two_pos)];
+Jpwr.PosSide.split2tail     = [mean(pwr_spl_pos),   confint(pwr_spl_pos)];
+Jpwr.PosSide.canonicalbb    = [mean(pwr_canbb_pos), confint(pwr_canbb_pos)];
+Jpwr.PosSide.split2tailbb   = [mean(pwr_splbb_pos), confint(pwr_splbb_pos)];
+Jpwr.NegSide.canonical      = [mean(pwr_can_neg),   confint(pwr_can_neg)];
+Jpwr.NegSide.combined       = [mean(pwr_com_neg),   confint(pwr_com_neg)];
+Jpwr.NegSide.twotailed      = [mean(pwr_two_neg),   confint(pwr_two_neg)];
+Jpwr.NegSide.split2tail     = [mean(pwr_spl_neg),   confint(pwr_spl_neg)];
+Jpwr.NegSide.canonicalbb    = [mean(pwr_canbb_neg), confint(pwr_canbb_neg)];
+Jpwr.NegSide.split2tailbb   = [mean(pwr_splbb_neg), confint(pwr_splbb_neg)];
+Jpwr.elapsed                = toc(st);
 
 % Write results
 writejson(Jfdp,strrep(outputfile,'.json','_fdp.json'));

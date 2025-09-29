@@ -1,4 +1,4 @@
-function [pthr,padj] = bb2014(varargin)
+function [pthr,pcor,padj] = bb2014(varargin)
 % Computes the FDR-threshold for multiple families of hypotheses
 % using the Benjamini-Bogomolov selective inference procedure.
 %
@@ -52,13 +52,13 @@ Pset   = varargin{1};
 qval   = 0.05;
 fdrfun = @bky7;
 cV     = 1;
-if nargin > 1
+if nargin > 1 && ~isempty(varargin{2})
     qval   = varargin{2};
 end
-if nargin > 2
-    fdrfun = varargin{2};
+if nargin > 2 && ~isempty(varargin{3})
+    fdrfun = varargin{3};
 end
-if nargin == 3
+if nargin > 3
     if varargin{4}
         cV = 1;
     else
