@@ -1,8 +1,39 @@
-function bb2014(varargin)
-% Computes the
+function [pthr,padj] = bb2014(varargin)
+% Computes the FDR-threshold for multiple families of hypotheses
+% using the Benjamini-Bogomolov selective inference procedure.
 %
-% Note that the corrected and adjusted p-values do **not** depend
-% on the supplied q-value, but they do depend on the choice of c(V).
+% Usage:
+% [pthr,pcor,padj] = bb2014(Pset)
+%                    bb2014(Pset,q)
+%                    bb2014(Pset,q,fdrfun)
+%                    bb2014(Pset,q,fdrfun,cV)
+%
+% Inputs:
+% Pset   = Set of p-values organized as families. Can be:
+%          - Cell array: each cell contains a vector of p-values for one family.
+%          - Matrix: each row contains p-values for one family.
+% q      = Allowed proportion of false positives (q-value).
+%          Default = 0.05.
+% fdrfun = Function handle for FDR method to use.
+%          Default = @bky7.
+% cV     = If set to anything but 1, uses an harmonic sum for c(V).
+%          Default = 1.
+%
+% Outputs:
+% pthr   = FDR thresholds for each family (cell array or matrix).
+% pcor   = FDR corrected p-values; shouldn't be used but are here for
+%          compatibility with previous functions.
+% padj   = FDR adjusted p-values for each family (cell array or matrix).
+%
+% The procedure works in three steps:
+% 1. Applies Simes test to each family of hypotheses.
+% 2. Applies FDR correction to the Simes p-values across families.
+% 3. Applies FDR to each selected family with adjusted q-value (q*R/nFam).
+%
+% Families not selected in step 2 receive pthr = 0 and padj = 1.
+% 
+% Note that the adjusted p-values do **not** depend on the supplied q-value,
+% but they do depend on the choice of c(V).
 %
 % References:
 % * Benjamini Y, Bogomolov M. Selective inference on multiple
@@ -12,9 +43,8 @@ function bb2014(varargin)
 %
 % ________________________________
 % Anderson M. Winkler
-% Research Imaging Center/UTHSCSA
-% Dec/2007 (first version)
-% Dec/2022 (this version)
+% UTRGV
+% Sep/2025
 % http://brainder.org
 
 narginchk(1,3);
@@ -57,27 +87,35 @@ else
 end
 
 % ========[PART 2: FDR ON SIMES]===========================================
-[~,~,pafos] = fdrfun(psimes,qval,cV); % "p after FDR on Simes"
-Ridx = pafos <= qval;
+[~,~,psimesfdradj] = fdrfun(psimes,qval,cV); % p after FDR on Simes
+Ridx = psimesfdradj <= qval;
 R    = sum(Ridx);
 
 % ========[PART 3: FDR ON EACH SELECTED FAMILY]============================
 if iscell(Pset)
-    Padj = cell(size(Pset));
+    pthr = cell(size(Pset));
+    pcor = cell(size(Pset));
+    padj = cell(size(Pset));
     for fam = 1:nFam
         if Ridx(fam)
-            [~,~,Padj{fam}] = fdrfun(Pset{fam},qval*R/nFam,cV);
+            [pthr{fam},pcor{fam},padj{fam}] = fdrfun(Pset{fam},qval*R/nFam,cV);
         else
-            Padj{fam} = 1;
+            pthr{fam} = 0;
+            pcor{fam} = 1;
+            padj{fam} = 1;
         end
     end
 elseif ismatrix(Pset)
-    Padj = zeros(size(Pset));
+    pthr = zeros(nFam,size(Pset,2));
+    pcor = zeros(size(Pset));
+    padj = zeros(size(Pset));
     for fam = 1:nFam
         if Ridx(fam)
-            [~,~,Padj(fam,:)] = fdrfun(Pset(fam,:),qval*R/nFam,cV);
+            [pthr(fam),pcor(fam,:),padj(fam,:)] = fdrfun(Pset(fam,:),qval*R/nFam,cV);
         else
-            Padj(fam,:) = 1;
+            pthr(fam)   = 0;
+            pcor(fam,:) = 1;
+            padj(fam,:) = 1;
         end
     end
 end
