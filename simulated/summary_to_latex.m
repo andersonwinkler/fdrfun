@@ -1,7 +1,7 @@
 [repodir,~,~] = fileparts(mfilename('fullpath'));
-noCI = true;
+noCI = false;
 % Load the table, sort
-T = readtable(fullfile(repodir,'summary_results_fdp.csv'));
+T = readtable(fullfile(repodir,'summary_results_pwr.csv'));
 T = sortrows(T,{'FDRmethod','scenario'},{'ascend','ascend'});
 
 % Select columns of interest, convert to percentages
@@ -23,12 +23,12 @@ Tx = table2array(Tx)*100;
 % Way 2: BH on the left, BKY on the right
 % Rearrange the table
 Ty = [];
-Ty( 1:10, 1:12) = Tx( 1:10,1:12);
-Ty( 1:10,13:24) = Tx(11:20,1:12);
-Ty(11:20, 1:12) = Tx( 1:10,13:24);
-Ty(11:20,13:24) = Tx(11:20,13:24);
-Ty(21:30, 1:12) = Tx( 1:10,25:36);
-Ty(21:30,13:24) = Tx(11:20,25:36);
+Ty( 1:10, 1:18) = Tx( 1:10,1:18);
+Ty( 1:10,19:36) = Tx(11:20,1:18);
+Ty(11:20, 1:18) = Tx( 1:10,19:36);
+Ty(11:20,19:36) = Tx(11:20,19:36);
+Ty(21:30, 1:18) = Tx( 1:10,37:54);
+Ty(21:30,19:36) = Tx(11:20,37:54);
 
 if noCI
     Ty = Ty(:,1:3:end);
