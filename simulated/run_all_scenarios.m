@@ -1,3 +1,4 @@
+rng(0)
 % Directory of this repo
 [repodir,~,~] = fileparts(mfilename('fullpath'));
 addpath(repodir);
@@ -8,7 +9,7 @@ Jfiles = dir(fullfile(repodir,'configs','*.json'));
 
 % Run each of these scenarios
 for j = 1:numel(Jfiles)
-    fprintf('Running scenario %d/%d\n',j,numel(Jfiles));
+    fprintf('Running scenario %d/%d (%s)\n',j,numel(Jfiles),Jfiles(j).name);
     run_scenario(...
         fullfile(repodir,'configs',Jfiles(j).name),...
         fullfile(repodir,'common_config.json'),...

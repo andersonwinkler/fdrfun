@@ -1,6 +1,6 @@
 addpath('~/tools/palm.git')
 addpath('../..')
-FDRmethod = 'bky';
+FDRmethod = 'bh';
 alpha = 0.05; % our q-threshold
 
 % Choose functions for FDR and for the confidence intervals
@@ -41,8 +41,8 @@ J.znegthr    = -tinv (alpha/2,df);
 writejson(J,'narps-4965_9U7M-hypo1_unc_pvals.json');
 
 % CANONICAL
-[thrcan0,~,adjcan0] = fdrfun(pvals0);
-[thrcan1,~,adjcan1] = fdrfun(pvals1);
+[thrcan0,adjcan0] = fdrfun(pvals0);
+[thrcan1,adjcan1] = fdrfun(pvals1);
 T.data(mask)  = -log10(adjcan0);
 T.filename    = sprintf('narps-4965_9U7M-hypo1_%s_canonical_mappos',fdrstr);
 palm_miscwrite(T);
@@ -56,7 +56,7 @@ J.znegthr     = -tinv( thrcan1,df);
 writejson(J,sprintf('narps-4965_9U7M-hypo1_%s_canonical.json',fdrstr));
 
 % COMBINED
-[thrcom,~,adjcom] = fdrfun([pvals0;pvals1]);
+[thrcom,adjcom] = fdrfun([pvals0;pvals1]);
 T.data(mask)  = -log10(adjcom(1:nV));
 T.filename    = sprintf('narps-4965_9U7M-hypo1_%s_combined_mappos',fdrstr);
 palm_miscwrite(T);
@@ -71,7 +71,7 @@ writejson(J,sprintf('narps-4965_9U7M-hypo1_%s_combined.json',fdrstr));
 
 % TWO-TAILED
 pvals2 = 2*tcdf(abs(tstats),df,'upper');
-[thrtwo,~,adjtwo] = fdrfun(pvals2);
+[thrtwo,adjtwo] = fdrfun(pvals2);
 T.data(mask)  = -log10(adjtwo);
 T.filename    = sprintf('narps-4965_9U7M-hypo1_%s_twotail',fdrstr);
 palm_miscwrite(T);
@@ -83,8 +83,8 @@ writejson(J,sprintf('narps-4965_9U7M-hypo1_%s_twotail.json',fdrstr));
 
 % SPLIT + TWO-TAILED
 adjspl = ones(size(pvals0));
-[thrspl0,~,adjspl(idxpos)] = fdrfun(pvals2(idxpos));
-[thrspl1,~,adjspl(idxneg)] = fdrfun(pvals2(idxneg));
+[thrspl0,adjspl(idxpos)] = fdrfun(pvals2(idxpos));
+[thrspl1,adjspl(idxneg)] = fdrfun(pvals2(idxneg));
 T.data(mask)  = -log10(adjspl);
 T.filename    = sprintf('narps-4965_9U7M-hypo1_%s_split2tail',fdrstr);
 palm_miscwrite(T);
@@ -96,7 +96,7 @@ writejson(J,sprintf('narps-4965_9U7M-hypo1_%s_split2tail.json',fdrstr));
 
 % CANONICAL + BB2014
 Pset = [pvals0';pvals1'];
-[thrcanbb,~,adjcanbb] = bb2014(Pset,[],fdrfun);
+[thrcanbb,adjcanbb] = bb2014(Pset,[],fdrfun);
 thrcanbb0 = thrcanbb(1);
 thrcanbb1 = thrcanbb(2);
 adjcanbb0 = adjcanbb(1,:)';
@@ -116,7 +116,7 @@ writejson(J,sprintf('narps-4965_9U7M-hypo1_%s_canonicalbb.json',fdrstr));
 % SPLIT + TWO-TAILED + BB2014
 adjsplbb = ones(size(pvals0));
 Pset = {pvals2(idxpos), pvals2(idxneg)};
-[tmpthr,~,tmpadj] = bb2014(Pset,[],fdrfun);
+[tmpthr,tmpadj] = bb2014(Pset,[],fdrfun);
 thrsplbb0 = tmpthr{1};
 thrsplbb1 = tmpthr{2};
 adjsplbb(idxpos) = tmpadj{1};

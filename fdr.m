@@ -2,9 +2,9 @@ function varargout = fdr(varargin)
 % Computes the FDR-threshold for a vector of p-values.
 %
 % Usage:
-% [pthr,pcor,padj] = fdr(pvals)
-%                    fdr(pval,q)
-%                    fdr(pval,q,cV)
+% [pthr,padj] = fdr(pvals)
+%               fdr(pval,q)
+%               fdr(pval,q,cV)
 %
 % Inputs:
 % pvals  = Vector of p-values.
@@ -15,7 +15,6 @@ function varargout = fdr(varargin)
 %
 % Outputs:
 % pthr   = FDR threshold.
-% pcor   = FDR corrected p-values.
 % padj   = FDR adjusted p-values.
 %
 % Note that the corrected and adjusted p-values do **not** depend
@@ -106,21 +105,12 @@ end
 % Returns the result
 varargout{1} = thr;
 
-% ========[PART 2: FDR CORRECTED]========================================
+% ========[PART 2: FDR ADJUSTED]========================================
 
-if nargout == 2 || nargout == 3
+if nargout == 2
     
     % p-corrected
     pcor = pval.*V.*cV./idx;
-
-    % Sort back to the original order and output
-    [~,oidxR] = sort(oidx);
-    varargout{2} = pcor(oidxR);
-end
-
-% ========[PART 3: FDR ADJUSTED ]========================================
-
-if nargout == 3
 
     % The p-adjusted for the current p-value is the smallest slope among
     % all the slopes of each of the p-values larger than or equal to the
@@ -143,7 +133,10 @@ if nargout == 3
     else
         padj = flipud(cummin(flipud(pcor)));
     end
-    varargout{3} = padj(oidxR);
+
+    % Sort back to the original order and output
+    [~,oidxR] = sort(oidx);
+    varargout{2} = padj(oidxR);
 end
 
 % That's it!

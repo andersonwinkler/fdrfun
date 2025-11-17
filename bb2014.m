@@ -1,9 +1,9 @@
-function [pthr,pcor,padj] = bb2014(varargin)
+function [pthr,padj,qfac] = bb2014(varargin)
 % Computes the FDR-threshold for multiple families of hypotheses
 % using the Benjamini-Bogomolov selective inference procedure.
 %
 % Usage:
-% [pthr,pcor,padj] = bb2014(Pset)
+% [pthr,padj,qfac] = bb2014(Pset)
 %                    bb2014(Pset,q)
 %                    bb2014(Pset,q,fdrfun)
 %                    bb2014(Pset,q,fdrfun,cV)
@@ -21,10 +21,11 @@ function [pthr,pcor,padj] = bb2014(varargin)
 %
 % Outputs:
 % pthr   = FDR thresholds for each family (cell array or matrix).
-% pcor   = FDR corrected p-values; shouldn't be used but are here for
-%          compatibility with previous functions.
 % padj   = FDR adjusted p-values for each family (cell array or matrix).
-%
+% qfac   = Ratio R/S, i.e., number of familes with significant results
+%          after Simes divided by the number of families.
+%          To threshold padj, use q*qfac.
+% 
 % The procedure works in three steps:
 % 1. Applies Simes test to each family of hypotheses.
 % 2. Applies FDR correction to the Simes p-values across families.
@@ -74,7 +75,11 @@ if iscell(Pset)
     end
     psimes = zeros(nFam,1);
     for fam = 1:nFam
-        [~,psimes(fam)] = simes(Pset{fam},qval);
+        if isempty(Pset{fam})
+            psimes(fam) = 1;
+        else
+            [~,psimes(fam)] = simes(Pset{fam},qval);
+        end
     end
 elseif ismatrix(Pset)
     nFam = size(Pset,1);
@@ -87,34 +92,31 @@ else
 end
 
 % ========[PART 2: FDR ON SIMES]===========================================
-[~,~,psimesfdradj] = fdrfun(psimes,qval,cV); % p after FDR on Simes
+[~,psimesfdradj] = fdrfun(psimes,qval,cV); % p after FDR on Simes
 Ridx = psimesfdradj <= qval;
 R    = sum(Ridx);
+qfac = R/nFam;
 
 % ========[PART 3: FDR ON EACH SELECTED FAMILY]============================
 if iscell(Pset)
     pthr = cell(size(Pset));
-    pcor = cell(size(Pset));
     padj = cell(size(Pset));
     for fam = 1:nFam
         if Ridx(fam)
-            [pthr{fam},pcor{fam},padj{fam}] = fdrfun(Pset{fam},qval*R/nFam,cV);
+            [pthr{fam},padj{fam}] = fdrfun(Pset{fam},qval*qfac,cV);
         else
             pthr{fam} = 0;
-            pcor{fam} = 1;
             padj{fam} = 1;
         end
     end
 elseif ismatrix(Pset)
     pthr = zeros(nFam,size(Pset,2));
-    pcor = zeros(size(Pset));
     padj = zeros(size(Pset));
     for fam = 1:nFam
         if Ridx(fam)
-            [pthr(fam),pcor(fam,:),padj(fam,:)] = fdrfun(Pset(fam,:),qval*R/nFam,cV);
+            [pthr(fam),padj(fam,:)] = fdrfun(Pset(fam,:),qval*qfac,cV);
         else
             pthr(fam)   = 0;
-            pcor(fam,:) = 1;
             padj(fam,:) = 1;
         end
     end

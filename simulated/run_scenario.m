@@ -114,29 +114,29 @@ for rlz = 1:numRealizations
     pvals2 = 2*normcdf(abs(zstats),'upper');
     
     % CANONICAL
-    [~,~,adj1] = fdrfun(pvals0);
-    [~,~,adj2] = fdrfun(pvals1);
+    [~,adj1] = fdrfun(pvals0);
+    [~,adj2] = fdrfun(pvals1);
     adjcan = [adj1;adj2];
 
     % CANONICAL + BB2014
     Pset = [pvals0';pvals1'];
-    [~,~,adjcanbb] = bb2014(Pset,[],fdrfun);
+    [~,adjcanbb,qfaccanbb] = bb2014(Pset,[],fdrfun);
     adjcanbb = [adjcanbb(1,:) adjcanbb(2,:)]';
 
     % COMBINED
-    [~,~,adjcom] = fdrfun([pvals0;pvals1]);
+    [~,adjcom] = fdrfun([pvals0;pvals1]);
     
     % TWO-TAILED
-    [~,~,adjtwo] = fdrfun(pvals2);
+    [~,adjtwo] = fdrfun(pvals2);
 
     % SPLIT + TWO-TAILED
     adjspl = zeros(size(pvals0));
-    [~,~,adjspl(testPos)] = fdrfun(pvals2(testPos));
-    [~,~,adjspl(testNeg)] = fdrfun(pvals2(testNeg));
+    [~,adjspl(testPos)] = fdrfun(pvals2(testPos));
+    [~,adjspl(testNeg)] = fdrfun(pvals2(testNeg));
 
     % SPLIT + TWO-TAILED + BB2014
     Pset = {pvals2(testPos), pvals2(testNeg)};
-    [~,~,tmp] = bb2014(Pset,[],fdrfun);
+    [~,tmp,qfacsplbb] = bb2014(Pset,[],fdrfun);
     adjsplbb = zeros(size(pvals0));
     adjsplbb(testPos) = tmp{1};
     adjsplbb(testNeg) = tmp{2};
@@ -146,8 +146,8 @@ for rlz = 1:numRealizations
     fdp_com  (rlz) = sum((adjcom   <= q) & ~ [truePos;trueNeg]) / sum(adjcom   <= q);
     fdp_two  (rlz) = sum((adjtwo   <= q) & ~ (truePos|trueNeg)) / sum(adjtwo   <= q);
     fdp_spl  (rlz) = sum((adjspl   <= q) & ~ (truePos|trueNeg)) / sum(adjspl   <= q);
-    fdp_canbb(rlz) = sum((adjcanbb <= q) & ~ [truePos;trueNeg]) / sum(adjcanbb <= q);
-    fdp_splbb(rlz) = sum((adjsplbb <= q) & ~ (truePos|trueNeg)) / sum(adjsplbb <= q);
+    fdp_canbb(rlz) = sum((adjcanbb <= q*qfaccanbb) & ~ [truePos;trueNeg]) / sum(adjcanbb <= q*qfaccanbb);
+    fdp_splbb(rlz) = sum((adjsplbb <= q*qfacsplbb) & ~ (truePos|trueNeg)) / sum(adjsplbb <= q*qfacsplbb);
 
     % Empirical FDRs (positive side of the map, i.e., user interested in positive results only, i.e., results that match the direction of the contrast)
     testPoc = [testPos;false(size(testPos))];
@@ -155,8 +155,8 @@ for rlz = 1:numRealizations
     fdp_com_pos(rlz)   = sum((adjcom  (testPoc) <= q) & ~ truePos(testPos)) / sum(adjcom  (testPoc) <= q);
     fdp_two_pos(rlz)   = sum((adjtwo  (testPos) <= q) & ~ truePos(testPos)) / sum(adjtwo  (testPos) <= q);
     fdp_spl_pos(rlz)   = sum((adjspl  (testPos) <= q) & ~ truePos(testPos)) / sum(adjspl  (testPos) <= q);
-    fdp_canbb_pos(rlz) = sum((adjcanbb(testPoc) <= q) & ~ truePos(testPos)) / sum(adjcanbb(testPoc) <= q);
-    fdp_splbb_pos(rlz) = sum((adjsplbb(testPos) <= q) & ~ truePos(testPos)) / sum(adjsplbb(testPos) <= q);
+    fdp_canbb_pos(rlz) = sum((adjcanbb(testPoc) <= q*qfaccanbb) & ~ truePos(testPos)) / sum(adjcanbb(testPoc) <= q*qfaccanbb);
+    fdp_splbb_pos(rlz) = sum((adjsplbb(testPos) <= q*qfacsplbb) & ~ truePos(testPos)) / sum(adjsplbb(testPos) <= q*qfacsplbb);
 
     % Empirical FDRs (negative side of the map, i.e., user interested in negative results only, i.e., results opposite to the direction of the contrast)
     testNec = [false(size(testNeg));testNeg];
@@ -164,32 +164,32 @@ for rlz = 1:numRealizations
     fdp_com_neg(rlz)   = sum((adjcom  (testNec) <= q) & ~ trueNeg(testNeg)) / sum(adjcom  (testNec) <= q);
     fdp_two_neg(rlz)   = sum((adjtwo  (testNeg) <= q) & ~ trueNeg(testNeg)) / sum(adjtwo  (testNeg) <= q);
     fdp_spl_neg(rlz)   = sum((adjspl  (testNeg) <= q) & ~ trueNeg(testNeg)) / sum(adjspl  (testNeg) <= q);
-    fdp_canbb_neg(rlz) = sum((adjcanbb(testNec) <= q) & ~ trueNeg(testNeg)) / sum(adjcanbb(testNec) <= q);
-    fdp_splbb_neg(rlz) = sum((adjsplbb(testNeg) <= q) & ~ trueNeg(testNeg)) / sum(adjsplbb(testNeg) <= q);
+    fdp_canbb_neg(rlz) = sum((adjcanbb(testNec) <= q*qfaccanbb) & ~ trueNeg(testNeg)) / sum(adjcanbb(testNec) <= q*qfaccanbb);
+    fdp_splbb_neg(rlz) = sum((adjsplbb(testNeg) <= q*qfacsplbb) & ~ trueNeg(testNeg)) / sum(adjsplbb(testNeg) <= q*qfacsplbb);
 
     % Empirical power (global, i.e., user looks into both sides of the map)
     pwr_can  (rlz) = sum(adjcan   <= q) / sum([truePos;trueNeg]);
     pwr_com  (rlz) = sum(adjcom   <= q) / sum([truePos;trueNeg]);
     pwr_two  (rlz) = sum(adjtwo   <= q) / sum((truePos|trueNeg));
     pwr_spl  (rlz) = sum(adjspl   <= q) / sum((truePos|trueNeg));
-    pwr_canbb(rlz) = sum(adjcanbb <= q) / sum([truePos;trueNeg]);
-    pwr_splbb(rlz) = sum(adjsplbb <= q) / sum((truePos|trueNeg));
+    pwr_canbb(rlz) = sum(adjcanbb <= q*qfaccanbb) / sum([truePos;trueNeg]);
+    pwr_splbb(rlz) = sum(adjsplbb <= q*qfacsplbb) / sum((truePos|trueNeg));
 
     % Empirical power (positive side of the map)
     pwr_can_pos  (rlz) = sum(adjcan  (testPoc) <= q) / sum(truePos(testPos));
     pwr_com_pos  (rlz) = sum(adjcom  (testPoc) <= q) / sum(truePos(testPos));
     pwr_two_pos  (rlz) = sum(adjtwo  (testPos) <= q) / sum(truePos(testPos));
     pwr_spl_pos  (rlz) = sum(adjspl  (testPos) <= q) / sum(truePos(testPos));
-    pwr_canbb_pos(rlz) = sum(adjcanbb(testPoc) <= q) / sum(truePos(testPos));
-    pwr_splbb_pos(rlz) = sum(adjsplbb(testPos) <= q) / sum(truePos(testPos));
+    pwr_canbb_pos(rlz) = sum(adjcanbb(testPoc) <= q*qfaccanbb) / sum(truePos(testPos));
+    pwr_splbb_pos(rlz) = sum(adjsplbb(testPos) <= q*qfacsplbb) / sum(truePos(testPos));
 
     % Empirical power (negative side of the map)
     pwr_can_neg  (rlz) = sum(adjcan  (testNec) <= q) / sum(trueNeg(testNeg));
     pwr_com_neg  (rlz) = sum(adjcom  (testNec) <= q) / sum(trueNeg(testNeg));
     pwr_two_neg  (rlz) = sum(adjtwo  (testNeg) <= q) / sum(trueNeg(testNeg));
     pwr_spl_neg  (rlz) = sum(adjspl  (testNeg) <= q) / sum(trueNeg(testNeg));
-    pwr_canbb_neg(rlz) = sum(adjcanbb(testNec) <= q) / sum(trueNeg(testNeg));
-    pwr_splbb_neg(rlz) = sum(adjsplbb(testNeg) <= q) / sum(trueNeg(testNeg));
+    pwr_canbb_neg(rlz) = sum(adjcanbb(testNec) <= q*qfaccanbb) / sum(trueNeg(testNeg));
+    pwr_splbb_neg(rlz) = sum(adjsplbb(testNeg) <= q*qfacsplbb) / sum(trueNeg(testNeg));
 end
 
 % If the FDP is NaN, then there were no positives, which we'd interpret as

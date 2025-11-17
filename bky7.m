@@ -3,9 +3,9 @@ function varargout = bky7(varargin)
 % using Definition 7 of BKY in full generality.
 %
 % Usage:
-% [pthr,pcor,padj] = bky7(pvals)
-%                    bky7(pval,q)
-%                    bky7(pval,q,cV)
+% [pthr,padj] = bky7(pvals)
+%               bky7(pval,q)
+%               bky7(pval,q,cV)
 %
 % Inputs:
 % pvals  = Vector of p-values.
@@ -16,7 +16,6 @@ function varargout = bky7(varargin)
 %
 % Outputs:
 % pthr   = FDR threshold.
-% pcor   = FDR corrected p-values.
 % padj   = FDR adjusted p-values.
 %
 % Note that the corrected and adjusted p-values do **not** depend
@@ -121,9 +120,9 @@ end
 % Returns the result
 varargout{1} = thr;
 
-% ========[PART 2: FDR CORRECTED]========================================
+% ========[PART 2: FDR ADJUSTED ]========================================
 
-if nargout == 2 || nargout == 3
+if nargout == 2
     
     % p-corrected
     pcor = inf(size(pval));
@@ -138,22 +137,16 @@ if nargout == 2 || nargout == 3
         end
     end
 
-    % Sort back to the original order and output
-    [~,oidxR] = sort(oidx);
-    varargout{2} = pcor(oidxR);
-end
-
-% ========[PART 3: FDR ADJUSTED ]========================================
-
-if nargout == 3
-
     % The p-adjusted for the current p-value is the cummulative maximum
     % up to it. Note that this is different from equation #3 of
     % Yekutieli & Benjamini (1999) that is used for p-value adjustment of
     % the usual FDR (BH).
     %padj = fliplr(cummin(fliplr(pcor)));
     padj = cummax(pcor);
-    varargout{3} = padj(oidxR);
+
+    % Sort back to the original order and output
+    [~,oidxR] = sort(oidx);
+    varargout{2} = padj(oidxR);
 end
 
 % That's it!
